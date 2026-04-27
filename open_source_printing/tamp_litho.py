@@ -36,6 +36,7 @@ def image_to_heightmap(
     blur_sigma: float = 1.0,
     contrast_percentile: tuple = (2.0, 98.0),
     preserve_aspect: bool = True,
+    flip: bool = True,
 ) -> np.ndarray:
     """
     Convert a microscopy image to a normalised [0, 1] height map.
@@ -56,6 +57,12 @@ def image_to_heightmap(
                              aspect ratio. The physical print dimensions
                              (--size-x / --size-y) should match this ratio
                              or the lithograph will appear stretched.
+        flip:                If True (default), flips the height map vertically
+                             so the print orientation matches the original image.
+                             The Y-axis is inverted between image and 3D space,
+                             so this correction is on by default. Use --no-flip
+                             to disable. Important for images with text or
+                             asymmetric/directional features.
 
     Returns:
         2-D float32 numpy array with values in [0, 1].
@@ -95,6 +102,9 @@ def image_to_heightmap(
 
     if invert:
         arr = 1.0 - arr
+
+    if flip:
+        arr = np.flipud(arr)
 
     return arr
 
@@ -347,6 +357,7 @@ def run_pipeline(args: argparse.Namespace) -> None:
         invert=args.invert,
         blur_sigma=args.blur,
         contrast_percentile=(args.contrast_lo, args.contrast_hi),
+        flip=not args.no_flip,
     )
     print(f"      Shape: {heightmap.shape}, range [{heightmap.min():.3f}, {heightmap.max():.3f}]")
 
@@ -396,6 +407,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     p.add_argument("--resolution", type=int, default=512, help="Height map resolution (px, longest side)")
     p.add_argument("--invert", action="store_true", help="Invert grayscale -> height mapping")
+    p.add_argument("--no-flip", action="store_true", help="Disable vertical flip correction (enabled by default to match image orientation)")
     p.add_argument("--blur", type=float, default=1.0, help="Gaussian blur sigma")
     p.add_argument("--contrast-lo", type=float, default=2.0, help="Low percentile for contrast stretch")
     p.add_argument("--contrast-hi", type=float, default=98.0, help="High percentile for contrast stretch")
