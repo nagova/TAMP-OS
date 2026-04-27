@@ -1,0 +1,8 @@
+# TAMP-OS Open-Source Lithograph Maker — Python dependencies
+numpy>=1.24
+Pillow>=10.0
+scipy>=1.11
+numpy-stl>=3.0
+
+# Optional — only needed for direct Klipper/Moonraker upload
+requests>=2.31
