@@ -17,6 +17,15 @@ This pipeline uses only open-source tools and works with any FDM printer.
 
 ---
 
+## Tools
+
+| Script | Description |
+|--------|-------------|
+| `tamp_litho.py` | Command-line pipeline — single image, full control |
+| `tamp_batch_gui.py` | GUI tool — select many images at once, process in batch |
+
+---
+
 ## Workflow Steps
 
 ### 1. Prepare your image in ImageJ/Fiji
@@ -54,6 +63,8 @@ This pipeline uses only open-source tools and works with any FDM printer.
 
 ### 3. Generate the STL file
 
+**Single image — command line:**
+
 Install dependencies once:
 ```bash
 pip install -r requirements.txt
@@ -69,9 +80,23 @@ python tamp_litho.py your_image.png \
   --skip-slice
 ```
 
-This produces a `.stl` file in `./output/`. Open it in [MeshLab](https://www.meshlab.net/) or PrusaSlicer to inspect the relief before printing.
+**Multiple images — batch GUI:**
 
-> 💡 Use `--invert` if your image has bright backgrounds and dark features (e.g. some TEM images) — this flips which areas become raised.
+```bash
+python tamp_batch_gui.py
+```
+
+A window will open where you can:
+- Select as many images as you want at once
+- Set all parameters (size, relief height, blur, resolution, flip)
+- Choose an output folder
+- Click **▶ Generate STLs** — a progress bar shows each file being processed
+
+> 💡 No extra installs needed for the GUI — tkinter is built into Python.
+
+This produces `.stl` files in your chosen output folder. Open them in [MeshLab](https://www.meshlab.net/) or PrusaSlicer to inspect the relief before printing.
+
+> 💡 Use `--invert` (CLI) or the invert checkbox (GUI) if your image has bright backgrounds and dark features (e.g. some TEM images) — this flips which areas become raised.
 
 ---
 
@@ -116,6 +141,7 @@ python tamp_litho.py your_image.png \
 | `--size-y` | 100 mm | Print height — **set to match image aspect ratio** |
 | `--resolution` | 512 | Height map resolution (px, longest side) |
 | `--invert` | off | Invert relief: dark areas become raised |
+| `--no-flip` | off | Disable vertical flip (flip is on by default to match image orientation) |
 | `--blur` | 1.0 | Gaussian smoothing — increase for noisy images |
 | `--base-thickness` | 1 mm | Solid base below relief |
 | `--relief-height` | 3 mm | Maximum tactile height difference |
@@ -152,11 +178,19 @@ python tamp_litho.py examples/SEM_5um_raw.png \
 
 ---
 
+## Files
+
+| File | Description |
+|------|-------------|
+| `tamp_litho.py` | Core pipeline: image → height map → STL → G-code → printer |
+| `tamp_batch_gui.py` | Tkinter GUI for batch processing multiple images |
+| `requirements.txt` | Python dependencies |
+
 ## Pipeline Details
 
 | Step | Function | Description |
 |------|----------|-------------|
-| 1 | `image_to_heightmap` | Grayscale → contrast stretch → Gaussian blur → [0,1] float array |
+| 1 | `image_to_heightmap` | Grayscale → contrast stretch → Gaussian blur → flip → [0,1] float array |
 | 2 | `heightmap_to_stl` | Builds watertight solid mesh: top relief + flat base + 4 side walls |
 | 3 | `slice_stl` | Calls PrusaSlicer CLI; pass a `.ini` profile for your printer |
 | 4 | `send_to_klipper` | Moonraker REST API upload + optional print start |
