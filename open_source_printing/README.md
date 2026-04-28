@@ -19,10 +19,14 @@ This pipeline uses only open-source tools and works with any FDM printer.
 
 ## Tools
 
-| Script | Description |
-|--------|-------------|
-| `tamp_litho.py` | Command-line pipeline — single image, full control |
-| `tamp_batch_gui.py` | GUI tool — select many images at once, process in batch |
+| File | Format | Description |
+|--------|--------|-------------|
+| `tamp_litho.py` | Python script | Command-line pipeline — single image, full control |
+| `tamp_batch_gui.py` | Python script | GUI tool — select many images at once, process in batch |
+| `tamp_litho.ipynb` | Jupyter notebook | Same as `tamp_litho.py` but step-by-step cells + inline preview |
+| `tamp_batch_gui.ipynb` | Jupyter notebook | Same as `tamp_batch_gui.py` but in notebook form |
+
+> ⚠️ **Jupyter notebook users:** The batch GUI notebook (`tamp_batch_gui.ipynb`) launches a tkinter window and requires **Jupyter Lab or Jupyter Notebook** to work. It will **not** display the GUI window inside VS Code's notebook viewer.
 
 ---
 
@@ -183,7 +187,9 @@ python tamp_litho.py examples/SEM_5um_raw.png \
 | File | Description |
 |------|-------------|
 | `tamp_litho.py` | Core pipeline: image → height map → STL → G-code → printer |
+| `tamp_litho.ipynb` | Jupyter notebook version of the pipeline with inline preview |
 | `tamp_batch_gui.py` | Tkinter GUI for batch processing multiple images |
+| `tamp_batch_gui.ipynb` | Jupyter notebook version of the batch GUI ⚠️ requires Jupyter Lab/Notebook |
 | `requirements.txt` | Python dependencies |
 
 ## Pipeline Details
