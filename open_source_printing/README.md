@@ -22,11 +22,12 @@ This pipeline uses only open-source tools and works with any FDM printer.
 | File | Format | Description |
 |--------|--------|-------------|
 | `tamp_litho.py` | Python script | Command-line pipeline — single image, full control |
-| `tamp_batch_gui.py` | Python script | GUI tool — select many images at once, process in batch |
-| `tamp_litho.ipynb` | Jupyter notebook | Same as `tamp_litho.py` but step-by-step cells + inline preview |
-| `tamp_batch_gui.ipynb` | Jupyter notebook | Same as `tamp_batch_gui.py` but in notebook form |
+| `tamp_batch_gui.py` | Python script | Batch GUI — select many images, pick output format, smart defaults |
+| `tamp_resolution_compare.py` | Python script | Comparison GUI — sweep resolution, relief height, or blur across one image |
+| `tamp_batch_gui.ipynb` | Jupyter notebook | Notebook version of the batch GUI |
+| `tamp_resolution_compare.ipynb` | Jupyter notebook | Notebook version of the comparison tool with side-by-side height map preview |
 
-> ⚠️ **Jupyter notebook users:** The batch GUI notebook (`tamp_batch_gui.ipynb`) launches a tkinter window and requires **Jupyter Lab or Jupyter Notebook** to work. It will **not** display the GUI window inside VS Code's notebook viewer.
+> ⚠️ **Jupyter notebook users:** Any notebook that launches a GUI window requires **Jupyter Lab or Jupyter Notebook**. It will **not** work inside VS Code's notebook viewer.
 
 ---
 
@@ -65,14 +66,34 @@ python tamp_batch_gui.py
 
 ## The Batch GUI
 
-![TAMP-OS Batch GUI](examples/tamp_batch_gui_screenshot.png)
+![TAMP-OS Batch GUI](assets/tamp_batch_gui_screenshot.png)
 
 The GUI lets you process multiple images at once without using the command line:
 
 1. Click **+ Add Images** to select one or more microscopy images
 2. Click **Browse** to choose where the STL files will be saved
-3. Set your parameters (see [All Options](#all-options) below)
-4. Click **▶ Generate STLs** — a progress bar shows each file being processed
+3. Choose your **output format**: `.STL` (universal), `.3MF` (PrusaSlicer), or `.GLB` (web viewers) — you can tick more than one
+4. Set your **print width** — height is calculated automatically from your image's aspect ratio
+5. Click **▶ Generate STLs** — a progress bar shows each file being processed
+
+> 💡 **Full customization** checkbox unlocks all advanced parameters (relief height, blur, resolution, base thickness) if you want to override the smart defaults.
+
+---
+
+## The Resolution Comparison Tool
+
+```bash
+python tamp_resolution_compare.py
+```
+
+Use this tool to find the best parameter settings before committing to a full batch run. It takes **one image** and generates multiple output files, each with a different value of the parameter you are testing.
+
+You choose which parameter to sweep:
+- **Resolution (px)** — e.g. `64, 128, 256, 512` to compare file size vs. detail
+- **Relief height (mm)** — e.g. `1.0, 2.0, 3.0, 5.0` to find the right tactile feel
+- **Blur (sigma)** — e.g. `0.5, 1.0, 1.5, 2.0` to balance smoothness vs. noise
+
+Files are named clearly (e.g. `elephant_resolution_64.stl`, `elephant_resolution_256.stl`) so you can compare them side by side in MeshLab or PrusaSlicer. The notebook version also generates a side-by-side height map preview image automatically.
 
 ---
 
@@ -130,13 +151,11 @@ python tamp_litho.py your_image.png \
 python tamp_batch_gui.py
 ```
 
-A window will open where you can:
-- Select as many images as you want at once
-- Set all parameters (size, relief height, blur, resolution, flip)
-- Choose an output folder
-- Click **▶ Generate STLs** — a progress bar shows each file being processed
+**Compare parameter settings first — comparison tool:**
 
-> 💡 No extra installs needed for the GUI — tkinter is built into Python.
+```bash
+python tamp_resolution_compare.py
+```
 
 This produces `.stl` files in your chosen output folder. Open them in [MeshLab](https://www.meshlab.net/) or PrusaSlicer to inspect the relief before printing.
 
@@ -232,7 +251,7 @@ These parameters appear in both the **GUI** and the **command-line** script (`ta
 → Make sure `--no-flip` is NOT set. Flip is on by default and corrects the Y-axis orientation. In the GUI, make sure "Flip vertically" is checked.
 
 **The relief is too subtle / too extreme**
-→ Adjust `--relief-height`. Start with `3.0` mm. Go up to `5.0` for more pronounced bumps, or down to `1.5` for a smoother feel.
+→ Adjust `--relief-height`. Start with `3.0` mm. Go up to `5.0` for more pronounced bumps, or down to `1.5` for a smoother feel. Use the **resolution comparison tool** to test different values before running a full batch.
 
 **The GUI window doesn't appear (Jupyter)**
 → The batch GUI requires **Jupyter Lab or Jupyter Notebook**. It will not work in VS Code's notebook viewer. Run `python tamp_batch_gui.py` directly from the terminal instead.
@@ -265,9 +284,10 @@ python tamp_litho.py examples/SEM_5um_raw.png \
 | File | Description |
 |------|-------------|
 | `tamp_litho.py` | Core pipeline: image → height map → STL → G-code → printer |
-| `tamp_litho.ipynb` | Jupyter notebook version of the pipeline with inline preview |
-| `tamp_batch_gui.py` | Tkinter GUI for batch processing multiple images |
+| `tamp_batch_gui.py` | Batch GUI: multiple images, output format selection, smart defaults |
 | `tamp_batch_gui.ipynb` | Jupyter notebook version of the batch GUI ⚠️ requires Jupyter Lab/Notebook |
+| `tamp_resolution_compare.py` | Comparison GUI: sweep one parameter across multiple values |
+| `tamp_resolution_compare.ipynb` | Jupyter notebook version with side-by-side height map preview |
 | `requirements.txt` | Python dependencies |
 
 ## Pipeline Details
