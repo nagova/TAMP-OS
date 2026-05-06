@@ -19,15 +19,22 @@ This pipeline uses only open-source tools and works with any FDM printer.
 
 ## Tools
 
+### Main tool
+
 | File | Format | Description |
 |--------|--------|-------------|
-| `tamp_litho.py` | Python script | Command-line pipeline — single image, full control |
-| `tamp_batch_gui.py` | Python script | Batch GUI — select many images, pick output format, smart defaults |
-| `tamp_resolution_compare.py` | Python script | Comparison GUI — sweep resolution, relief height, or blur across one image |
-| `tamp_batch_gui.ipynb` | Jupyter notebook | Notebook version of the batch GUI |
-| `tamp_resolution_compare.ipynb` | Jupyter notebook | Notebook version of the comparison tool with side-by-side height map preview |
+| `tamp_batch_gui_v2.ipynb` | Jupyter notebook | **Start here.** Batch GUI with Low/Medium/High quality presets calculated from your printer's nozzle and layer height. Supports .STL, .3MF, .GLB output. |
 
-> ⚠️ **Jupyter notebook users:** Any notebook that launches a GUI window requires **Jupyter Lab or Jupyter Notebook**. It will **not** work inside VS Code's notebook viewer.
+> ⚠️ Requires **Jupyter Lab or Jupyter Notebook** — not VS Code notebook viewer.
+
+### Supporting tools
+
+| File | Format | Description |
+|--------|--------|-------------|
+| `tamp_batch_gui.ipynb` | Jupyter notebook | Previous version of the batch GUI — manual resolution and blur settings, useful if you want full control from the start |
+| `tamp_litho.py` | Python script | Command-line pipeline for single images — useful for automation and scripting |
+| `tamp_resolution_compare.ipynb` | Jupyter notebook | **Quality checking tool.** Run one image at multiple resolution, relief height, or blur values to find the best settings before a full batch run |
+| `tamp_resolution_compare.py` | Python script | GUI version of the comparison tool |
 
 ---
 
@@ -56,44 +63,49 @@ pip install -r requirements.txt
 ```
 You only need to do this once.
 
-### 3. Run the GUI
+### 3. Open the main tool
 
-```bash
-python tamp_batch_gui.py
-```
+Open `tamp_batch_gui_v2.ipynb` in Jupyter Lab and run all cells. The GUI window will appear.
 
 ---
 
-## The Batch GUI
+## The Main Batch GUI (v2)
 
-![TAMP-OS Batch GUI](assets/tamp_batch_gui_screenshot.png)
+The v2 GUI calculates resolution and blur automatically from your printer's physical specs — no need to guess numbers.
 
-The GUI lets you process multiple images at once without using the command line:
+**How to use it:**
 
 1. Click **+ Add Images** to select one or more microscopy images
-2. Click **Browse** to choose where the STL files will be saved
-3. Choose your **output format**: `.STL` (universal), `.3MF` (PrusaSlicer), or `.GLB` (web viewers) — you can tick more than one
-4. Set your **print width** — height is calculated automatically from your image's aspect ratio
-5. Click **▶ Generate STLs** — a progress bar shows each file being processed
+2. Click **Browse** to choose where files will be saved
+3. Choose your **output format**: `.STL`, `.3MF`, or `.GLB` — tick as many as you need
+4. Enter your **printer specs** (print width, nozzle diameter, layer height)
+5. Select a **quality preset**:
 
-> 💡 **Full customization** checkbox unlocks all advanced parameters (relief height, blur, resolution, base thickness) if you want to override the smart defaults.
+| Preset | What it means |
+|--------|--------------|
+| **Low** | 1 pixel = 2× nozzle width. Smooth, small file. Good for quick checks. |
+| **Medium** | 1 pixel = 1 nozzle width. Matches what your printer can actually reproduce. **Recommended starting point.** |
+| **High** | 1 pixel = 0.5× nozzle width. Finer than the nozzle — captures more texture, larger file. |
+
+6. Set **print height** — leave as `auto` and it is calculated from your image's aspect ratio
+7. Set **relief height** — the mm difference between lowest and highest point. The GUI shows how many distinct height levels your printer can produce at your layer height
+8. Click **Generate STLs**
+
+> 💡 Check **Full customization** to override resolution, blur, and base thickness manually if needed.
 
 ---
 
-## The Resolution Comparison Tool
+## Quality Checking Before a Full Batch Run
 
-```bash
-python tamp_resolution_compare.py
-```
+Before processing many images, use `tamp_resolution_compare.ipynb` to find the best settings for your specific image and printer.
 
-Use this tool to find the best parameter settings before committing to a full batch run. It takes **one image** and generates multiple output files, each with a different value of the parameter you are testing.
+It runs **one image** at multiple values of one parameter (resolution, relief height, or blur) and saves clearly named files — e.g. `elephant_resolution_128.stl`, `elephant_resolution_256.stl` — so you can compare them side by side in MeshLab or PrusaSlicer.
 
-You choose which parameter to sweep:
-- **Resolution (px)** — e.g. `64, 128, 256, 512` to compare file size vs. detail
-- **Relief height (mm)** — e.g. `1.0, 2.0, 3.0, 5.0` to find the right tactile feel
-- **Blur (sigma)** — e.g. `0.5, 1.0, 1.5, 2.0` to balance smoothness vs. noise
-
-Files are named clearly (e.g. `elephant_resolution_64.stl`, `elephant_resolution_256.stl`) so you can compare them side by side in MeshLab or PrusaSlicer. The notebook version also generates a side-by-side height map preview image automatically.
+**Recommended workflow:**
+1. Run `tamp_resolution_compare.ipynb` on one representative image
+2. Open the output files in MeshLab to compare
+3. Pick the settings that look best
+4. Use those settings in `tamp_batch_gui_v2.ipynb` for the full batch
 
 ---
 
@@ -102,70 +114,49 @@ Files are named clearly (e.g. `elephant_resolution_64.stl`, `elephant_resolution
 ### 1. Prepare your image in ImageJ/Fiji
 
 - Convert to grayscale
-- For images with very fine detail (1–2 pixel precision), apply a Gaussian blur (radius = 1.0 pixel) — or use `--blur 1.0` in the script instead
+- For images with very fine detail (1–2 pixel precision), apply a Gaussian blur (radius = 1.0 pixel) — or use the blur setting in the GUI
 - **Crop out any scale bars, metadata bars, or annotations** at the bottom of the image — these will appear as raised features in the lithograph
 - Export as `.PNG` or `.JPG`
-
-> 💡 The script handles grayscale conversion and blur internally, so you can also feed in a raw export directly and tune `--blur` from the command line.
 
 ---
 
 ### 2. Check your image dimensions and set print size
 
-- Note your image's pixel dimensions (e.g. 1024×768)
-- Your physical print size must match this aspect ratio — **the print does NOT have to be square**
-- If the ratio is wrong, the script will warn you automatically and suggest the correct `--size-y`
+- Your physical print size must match the image aspect ratio — **the print does NOT have to be square**
+- Leave print height as `auto` and the tool calculates it for you
+- If you set it manually and it doesn't match, the script will warn you:
 
-| Image pixels | Print flags |
+```
+[WARNING] Aspect ratio mismatch!
+    Height map is 512×384 (ratio 1.333)
+    Print size is 100×100 mm (ratio 1.000)
+    The lithograph will appear stretched. Consider size_y=75.0
+```
+
+| Image pixels | Correct print size |
 |---|---|
-| 1024 × 1024 (square) | `--size-x 100 --size-y 100` |
-| 1024 × 768 (4:3) | `--size-x 100 --size-y 75` |
-| 1920 × 1080 (16:9) | `--size-x 100 --size-y 56.3` |
-
-> ⚠️ If `--size-x` and `--size-y` don't match your image's aspect ratio, the script will warn you:
-> ```
-> [WARNING] Aspect ratio mismatch!
->     Height map is 512×384 (ratio 1.333)
->     Print size is 100×100 mm (ratio 1.000)
->     The lithograph will appear stretched. Consider --size-y 75.0
-> ```
+| 1024 × 1024 (square) | size_x=100, size_y=100 |
+| 1024 × 768 (4:3) | size_x=100, size_y=75 |
+| 1920 × 1080 (16:9) | size_x=100, size_y=56.3 |
 
 ---
 
-### 3. Generate the STL file
+### 3. Generate the STL
 
-**Single image — command line:**
+Use `tamp_batch_gui_v2.ipynb` for most cases. For single images via command line:
 
 ```bash
 python tamp_litho.py your_image.png \
   --size-x 100 --size-y 75 \
-  --base-thickness 1.0 \
   --relief-height 3.0 \
-  --blur 1.2 \
   --skip-slice
 ```
-
-**Multiple images — batch GUI:**
-
-```bash
-python tamp_batch_gui.py
-```
-
-**Compare parameter settings first — comparison tool:**
-
-```bash
-python tamp_resolution_compare.py
-```
-
-This produces `.stl` files in your chosen output folder. Open them in [MeshLab](https://www.meshlab.net/) or PrusaSlicer to inspect the relief before printing.
-
-> 💡 Use `--invert` (CLI) or the invert checkbox (GUI) if your image has bright backgrounds and dark features (e.g. some TEM images) — this flips which areas become raised.
 
 ---
 
 ### 4. Slice and print
 
-**Option A — Manual (any slicer):**
+**Manual (any slicer):**
 - Load the `.stl` into PrusaSlicer, OrcaSlicer, or Cura
 - Recommended FDM settings:
   - Layer height: **0.12 mm**
@@ -173,7 +164,7 @@ This produces `.stl` files in your chosen output folder. Open them in [MeshLab](
   - Infill: **15%** (gyroid)
   - Supports: **none needed** (flat base)
 
-**Option B — Automated via script:**
+**Automated via command line:**
 ```bash
 python tamp_litho.py your_image.png \
   --size-x 100 --size-y 75 \
@@ -181,12 +172,12 @@ python tamp_litho.py your_image.png \
   --layer-height 0.12
 ```
 
-> 💡 Finding PrusaSlicer on your system:
+> 💡 Finding PrusaSlicer:
 > - **Linux:** `which prusa-slicer`
 > - **macOS:** `/Applications/PrusaSlicer.app/Contents/MacOS/PrusaSlicer`
 > - **Windows:** `C:\Program Files\Prusa3D\PrusaSlicer\prusa-slicer-console.exe`
 
-**Option C — Send directly to printer (Klipper only):**
+**Direct to Klipper printer:**
 ```bash
 python tamp_litho.py your_image.png \
   --size-x 100 --size-y 75 \
@@ -196,30 +187,23 @@ python tamp_litho.py your_image.png \
 
 ---
 
-## All Options
-
-These parameters appear in both the **GUI** and the **command-line** script (`tamp_litho.py`).
-
-| GUI label | CLI flag | Default | What it does |
-|-----------|----------|---------|--------------|
-| Print width (mm) | `--size-x` | 100 mm | Physical width of the final print in mm |
-| Print height (mm) | `--size-y` | 100 mm | Physical height of the final print in mm — **must match your image's aspect ratio** or the lithograph will look stretched |
-| Relief height (mm) | `--relief-height` | 3 mm | Height difference between the lowest and highest point of the tactile surface. Higher = more pronounced bumps. Start with 3.0 mm for a first print |
-| Base thickness (mm) | `--base-thickness` | 1 mm | Thickness of the solid flat base below the relief. Keeps the print rigid |
-| Blur (sigma) | `--blur` | 1.0 | Gaussian smoothing applied before height mapping. Increase for noisier images (e.g. 1.5–2.0 for low-quality SEM). Too high = loss of detail |
-| Resolution (px) | `--resolution` | 512 | Height map resolution in pixels (longest side). Higher = more detail but larger STL file. 256 = ~10 MB, 512 = ~40 MB |
-| Invert relief | `--invert` | off | Flips which areas become raised. Use if your image has bright backgrounds and dark features (e.g. some TEM images) |
-| Flip vertically | *(on by default)* | on | Corrects the Y-axis flip between image coordinates and 3D space so the print matches the original image orientation. Only disable with `--no-flip` if you have a specific reason |
-
-### CLI-only options (slicing & printing)
+## All Options (command-line)
 
 | CLI flag | Default | What it does |
 |----------|---------|--------------|
+| `--size-x` | 100 mm | Print width |
+| `--size-y` | 100 mm | Print height — match image aspect ratio |
+| `--relief-height` | 3 mm | Max tactile height difference |
+| `--base-thickness` | 1 mm | Solid base below relief |
+| `--blur` | 1.0 | Gaussian smoothing — increase for noisy images |
+| `--resolution` | 512 | Height map resolution in px |
+| `--invert` | off | Flips which areas become raised |
+| `--no-flip` | off | Disable vertical flip correction |
 | `--layer-height` | 0.12 mm | FDM layer height for slicing |
-| `--skip-slice` | off | Stop after generating the STL, skip slicing |
-| `--printer-profile` | — | Path to a PrusaSlicer `.ini` config for your specific printer |
-| `--moonraker-host` | — | URL of your Klipper printer (e.g. `http://192.168.1.42:7125`) for direct upload |
-| `--start-print` | off | Automatically start the print after uploading to Klipper |
+| `--skip-slice` | off | Stop after STL, skip slicing |
+| `--printer-profile` | — | PrusaSlicer `.ini` config |
+| `--moonraker-host` | — | Klipper printer URL |
+| `--start-print` | off | Auto-start print after upload |
 
 ---
 
@@ -236,31 +220,31 @@ These parameters appear in both the **GUI** and the **command-line** script (`ta
 ## Troubleshooting
 
 **`python: command not found` / `pip: command not found`**
-→ Python is not installed or not in PATH. Re-install from https://www.python.org/downloads/ and make sure to check "Add Python to PATH" on Windows.
+→ Python is not installed or not in PATH. Re-install from https://www.python.org/downloads/ and check "Add Python to PATH" on Windows.
 
 **`ModuleNotFoundError: No module named 'numpy'` (or pillow, scipy, stl)**
-→ Dependencies are not installed. Run `pip install -r requirements.txt` from inside the `open_source_printing/` folder.
+→ Run `pip install -r requirements.txt` from inside the `open_source_printing/` folder.
 
 **`ModuleNotFoundError: No module named 'tamp_litho'` (when running the GUI)**
-→ Make sure `tamp_batch_gui.py` and `tamp_litho.py` are in the same folder and you are running the script from that folder.
+→ Make sure `tamp_batch_gui.py` and `tamp_litho.py` are in the same folder.
 
 **The STL looks stretched or squished**
-→ Your `--size-x` and `--size-y` don't match the image aspect ratio. Check the warning printed by the script and use the suggested `--size-y` value.
+→ Print height doesn't match the image aspect ratio. Leave size_y as `auto` or check the warning message for the suggested value.
 
-**The STL is mirrored compared to the original image**
-→ Make sure `--no-flip` is NOT set. Flip is on by default and corrects the Y-axis orientation. In the GUI, make sure "Flip vertically" is checked.
+**The STL is mirrored**
+→ Make sure "Flip vertically" is checked in the GUI, or that `--no-flip` is not set in the CLI.
 
-**The relief is too subtle / too extreme**
-→ Adjust `--relief-height`. Start with `3.0` mm. Go up to `5.0` for more pronounced bumps, or down to `1.5` for a smoother feel. Use the **resolution comparison tool** to test different values before running a full batch.
+**The relief is too subtle or too extreme**
+→ Adjust relief height. Start with 3.0 mm. Use `tamp_resolution_compare.ipynb` to test values before a full batch run.
 
 **The GUI window doesn't appear (Jupyter)**
-→ The batch GUI requires **Jupyter Lab or Jupyter Notebook**. It will not work in VS Code's notebook viewer. Run `python tamp_batch_gui.py` directly from the terminal instead.
+→ Use Jupyter Lab or Jupyter Notebook. Does not work in VS Code's notebook viewer.
 
 **PrusaSlicer not found**
-→ Pass the full path to the executable with `--prusaslicer`. See the path examples in [Step 4](#4-slice-and-print) above.
+→ Pass the full path with `--prusaslicer`. See examples in Step 4 above.
 
 **STL file is too large for GitHub (>25 MB)**
-→ Reduce `--resolution` to `256`. This brings the file size to ~10 MB with minimal loss of printable detail.
+→ Use the Low preset, or reduce `--resolution` to 256 in the CLI.
 
 ---
 
@@ -270,24 +254,17 @@ Input: `SEM_5um_raw.png` — FePt spherical particles, 5 μm scale
 
 ![Height map preview](examples/fept_spheres/sem5um_preview.png)
 
-Generated with:
-```bash
-python tamp_litho.py examples/SEM_5um_raw.png \
-  --size-x 100 --size-y 75 \
-  --relief-height 3.0 --blur 1.2
-```
-
 ---
 
 ## Files
 
 | File | Description |
 |------|-------------|
-| `tamp_litho.py` | Core pipeline: image → height map → STL → G-code → printer |
-| `tamp_batch_gui.py` | Batch GUI: multiple images, output format selection, smart defaults |
-| `tamp_batch_gui.ipynb` | Jupyter notebook version of the batch GUI ⚠️ requires Jupyter Lab/Notebook |
-| `tamp_resolution_compare.py` | Comparison GUI: sweep one parameter across multiple values |
-| `tamp_resolution_compare.ipynb` | Jupyter notebook version with side-by-side height map preview |
+| `tamp_batch_gui_v2.ipynb` | **Main tool** — batch GUI with quality presets |
+| `tamp_batch_gui.ipynb` | Supporting — previous GUI version, manual settings |
+| `tamp_litho.py` | Supporting — command-line single image pipeline |
+| `tamp_resolution_compare.ipynb` | Supporting — quality checking before batch runs |
+| `tamp_resolution_compare.py` | Supporting — GUI version of the comparison tool |
 | `requirements.txt` | Python dependencies |
 
 ## Pipeline Details
