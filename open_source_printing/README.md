@@ -31,9 +31,9 @@ This pipeline uses only open-source tools and works with any FDM printer.
 
 | File | Format | Description |
 |--------|--------|-------------|
-| `tamp_batch_gui.ipynb` | Jupyter notebook | Previous version of the batch GUI — manual resolution and blur settings, useful if you want full control from the start |
-| `tamp_litho.py` | Python script | Command-line pipeline for single images — useful for automation and scripting |
 | `tamp_resolution_compare.ipynb` | Jupyter notebook | **Quality checking tool.** Run one image at multiple resolution, relief height, or blur values to find the best settings before a full batch run |
+| `pyvista_image-generator.ipynb` | Jupyter notebook | **3D visualization tool.** Renders every STL in your comparison folder as a 3D screenshot (full view + zoom), useful for figures and presentations |
+| `tamp_litho.py` | Python script | Command-line pipeline for single images — useful for automation and scripting |
 | `tamp_resolution_compare.py` | Python script | GUI version of the comparison tool |
 
 ---
@@ -103,9 +103,54 @@ It runs **one image** at multiple values of one parameter (resolution, relief he
 
 **Recommended workflow:**
 1. Run `tamp_resolution_compare.ipynb` on one representative image
-2. Open the output files in MeshLab to compare
+2. Open the output STL files in MeshLab to compare, or use `pyvista_image-generator.ipynb` to render them all as 3D screenshots automatically
 3. Pick the settings that look best
 4. Use those settings in `tamp_batch_gui_v2.ipynb` for the full batch
+
+---
+
+## 3D Visualization of Comparison Results
+
+After running `tamp_resolution_compare.ipynb`, use `pyvista_image-generator.ipynb` to render all your output STLs as 3D images without opening MeshLab manually.
+
+It reads every `.stl` file in your comparison output folder and saves two renders per file:
+- **Full view** — the whole lithograph from an isometric angle
+- **Zoom view** — a close-up of the center to show surface detail
+
+Both dark and light themes are available. The output PNGs can be used directly in figures and presentations.
+
+**How to use it:**
+1. Run `tamp_resolution_compare.ipynb` first to generate the STL files
+2. Open `pyvista_image-generator.ipynb`
+3. Set `STL_FOLDER` to your comparison output folder
+4. Choose `THEME = "dark"` or `THEME = "light"`
+5. Run the cell — renders are saved to `individual_renders/` and `zoom_renders/`
+
+> 💡 Install dependencies with: `pip install pyvista trame`
+
+---
+
+## Choosing Parameters Based on Your Printer
+
+The Low / Medium / High presets in the v2 GUI are calculated from your printer's nozzle diameter and layer height. The table below shows what those presets translate to for the most common nozzle sizes, assuming a 100 mm wide print.
+
+The right choice depends on your **machine**, **material**, and **time available** — but the sweep tool makes it easy to verify visually before committing to a full batch.
+
+| Nozzle | Preset | Resolution | Blur | 1 px on print | Notes |
+|--------|--------|-----------|------|---------------|-------|
+| 0.4 mm | Low    | 128 px | 2.0 | 0.78 mm | Fast print, smooth feel, small file |
+| 0.4 mm | Medium | 256 px | 1.2 | 0.39 mm | Matches nozzle — **recommended starting point** |
+| 0.4 mm | High   | 512 px | 0.8 | 0.20 mm | Finer than nozzle, captures more texture |
+| 0.6 mm | Low    | 64 px  | 2.0 | 1.56 mm | Very smooth, very fast |
+| 0.6 mm | Medium | 128 px | 1.2 | 0.78 mm | Matches nozzle |
+| 0.6 mm | High   | 256 px | 0.8 | 0.39 mm | Finer than nozzle |
+| 0.2 mm | Low    | 256 px | 2.0 | 0.39 mm | Matches a 0.4 mm Medium |
+| 0.2 mm | Medium | 512 px | 1.2 | 0.20 mm | High detail, large file |
+| 0.2 mm | High   | 512 px | 0.8 | 0.20 mm | Capped at 512 px (GitHub file size limit) |
+
+> ⚠️ These are starting points — the optimal settings also depend on the image itself. A high-contrast SEM image (sharp edges, lots of noise) may need more blur even at Medium resolution. A smooth fluorescence image may look great at Low. Use `tamp_resolution_compare.ipynb` to check your specific image before running a full batch.
+
+> 💡 If you want full control, the **Full customization** panel in the v2 GUI lets you override resolution, blur, and base thickness independently of any preset. You can also work directly with the STL and adjust slicing settings in PrusaSlicer for further control.
 
 ---
 
@@ -261,9 +306,9 @@ Input: `SEM_5um_raw.png` — FePt spherical particles, 5 μm scale
 | File | Description |
 |------|-------------|
 | `tamp_batch_gui_v2.ipynb` | **Main tool** — batch GUI with quality presets |
-| `tamp_batch_gui.ipynb` | Supporting — previous GUI version, manual settings |
-| `tamp_litho.py` | Supporting — command-line single image pipeline |
 | `tamp_resolution_compare.ipynb` | Supporting — quality checking before batch runs |
+| `pyvista_image-generator.ipynb` | Supporting — 3D rendering of comparison STLs for figures |
+| `tamp_litho.py` | Supporting — command-line single image pipeline |
 | `tamp_resolution_compare.py` | Supporting — GUI version of the comparison tool |
 | `requirements.txt` | Python dependencies |
 
