@@ -33,8 +33,6 @@ This pipeline uses only open-source tools and works with any FDM printer.
 |--------|--------|-------------|
 | `tamp_resolution_compare.ipynb` | Jupyter notebook | **Quality checking tool.** Run one image at multiple resolution, relief height, or blur values to find the best settings before a full batch run |
 | `pyvista_image-generator.ipynb` | Jupyter notebook | **3D visualization tool.** Renders every STL in your comparison folder as a 3D screenshot (full view + zoom), useful for figures and presentations |
-| `tamp_litho.py` | Python script | Command-line pipeline for single images — useful for automation and scripting |
-| `tamp_resolution_compare.py` | Python script | GUI version of the comparison tool |
 
 ---
 
@@ -63,9 +61,16 @@ pip install -r requirements.txt
 ```
 You only need to do this once.
 
-### 3. Open the main tool
+### 3. Install Jupyter Lab (if you don't have it)
 
-Open `tamp_batch_gui_v2.ipynb` in Jupyter Lab and run all cells. The GUI window will appear.
+```bash
+pip install jupyterlab
+jupyter lab
+```
+
+### 4. Open the main tool
+
+In Jupyter Lab, open `tamp_batch_gui_v2.ipynb` and run all cells. The GUI window will appear.
 
 ---
 
@@ -188,14 +193,7 @@ The right choice depends on your **machine**, **material**, and **time available
 
 ### 3. Generate the STL
 
-Use `tamp_batch_gui_v2.ipynb` for most cases. For single images via command line:
-
-```bash
-python tamp_litho.py your_image.png \
-  --size-x 100 --size-y 75 \
-  --relief-height 3.0 \
-  --skip-slice
-```
+Open `tamp_batch_gui_v2.ipynb` in Jupyter Lab, add your images, choose your quality preset, and click **Generate STLs**.
 
 ---
 
@@ -209,48 +207,9 @@ python tamp_litho.py your_image.png \
   - Infill: **15%** (gyroid)
   - Supports: **none needed** (flat base)
 
-**Automated via command line:**
-```bash
-python tamp_litho.py your_image.png \
-  --size-x 100 --size-y 75 \
-  --prusaslicer /path/to/prusa-slicer \
-  --layer-height 0.12
-```
-
-> 💡 Finding PrusaSlicer:
-> - **Linux:** `which prusa-slicer`
-> - **macOS:** `/Applications/PrusaSlicer.app/Contents/MacOS/PrusaSlicer`
-> - **Windows:** `C:\Program Files\Prusa3D\PrusaSlicer\prusa-slicer-console.exe`
-
-**Direct to Klipper printer:**
-```bash
-python tamp_litho.py your_image.png \
-  --size-x 100 --size-y 75 \
-  --moonraker-host http://192.168.1.42:7125 \
-  --start-print
-```
-
 ---
 
-## All Options (command-line)
 
-| CLI flag | Default | What it does |
-|----------|---------|--------------|
-| `--size-x` | 100 mm | Print width |
-| `--size-y` | 100 mm | Print height — match image aspect ratio |
-| `--relief-height` | 3 mm | Max tactile height difference |
-| `--base-thickness` | 1 mm | Solid base below relief |
-| `--blur` | 1.0 | Gaussian smoothing — increase for noisy images |
-| `--resolution` | 512 | Height map resolution in px |
-| `--invert` | off | Flips which areas become raised |
-| `--no-flip` | off | Disable vertical flip correction |
-| `--layer-height` | 0.12 mm | FDM layer height for slicing |
-| `--skip-slice` | off | Stop after STL, skip slicing |
-| `--printer-profile` | — | PrusaSlicer `.ini` config |
-| `--moonraker-host` | — | Klipper printer URL |
-| `--start-print` | off | Auto-start print after upload |
-
----
 
 ## Recommended Printers
 
@@ -269,9 +228,6 @@ python tamp_litho.py your_image.png \
 
 **`ModuleNotFoundError: No module named 'numpy'` (or pillow, scipy, stl)**
 → Run `pip install -r requirements.txt` from inside the `open_source_printing/` folder.
-
-**`ModuleNotFoundError: No module named 'tamp_litho'` (when running the GUI)**
-→ Make sure `tamp_batch_gui.py` and `tamp_litho.py` are in the same folder.
 
 **The STL looks stretched or squished**
 → Print height doesn't match the image aspect ratio. Leave size_y as `auto` or check the warning message for the suggested value.
@@ -308,15 +264,14 @@ Input: `SEM_5um_raw.png` — FePt spherical particles, 5 μm scale
 | `tamp_batch_gui_v2.ipynb` | **Main tool** — batch GUI with quality presets |
 | `tamp_resolution_compare.ipynb` | Supporting — quality checking before batch runs |
 | `pyvista_image-generator.ipynb` | Supporting — 3D rendering of comparison STLs for figures |
-| `tamp_litho.py` | Supporting — command-line single image pipeline |
-| `tamp_resolution_compare.py` | Supporting — GUI version of the comparison tool |
 | `requirements.txt` | Python dependencies |
 
 ## Pipeline Details
+
+All notebooks are self-contained — no external scripts needed. The pipeline runs these steps internally:
 
 | Step | Function | Description |
 |------|----------|-------------|
 | 1 | `image_to_heightmap` | Grayscale → contrast stretch → Gaussian blur → flip → [0,1] float array |
 | 2 | `heightmap_to_stl` | Builds watertight solid mesh: top relief + flat base + 4 side walls |
-| 3 | `slice_stl` | Calls PrusaSlicer CLI; pass a `.ini` profile for your printer |
-| 4 | `send_to_klipper` | Moonraker REST API upload + optional print start |
+| 3 | Format conversion | Converts STL to .3MF or .GLB if selected |
