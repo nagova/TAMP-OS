@@ -6,6 +6,14 @@ This subfolder extends the TAMP workflow to replace Bambu Lab with a fully open-
 Microscopy Image → Height Map → STL → G-code (PrusaSlicer) → Printer (Klipper/Prusa)
 ```
 
+### Fabrication method
+
+This pipeline produces **discrete extruded topology** — height maps converted to layered FDM (fused deposition modeling) prints. The nozzle diameter and layer height define the minimum feature size that can be physically reproduced.
+
+This is distinct from **continuous microtopography fabrication** methods (e.g. photopolymer jetting, SLA, or specialized tactile printing systems), which can achieve finer surface gradients. If you are using a non-FDM printer, the nozzle-based preset calculations will not apply — use the **Full customization** panel and the sweep tool to determine your own optimal parameters.
+
+---
+
 ### Why open-source?
 
 The Bambu Lab ecosystem has three limitations for research use:
@@ -112,6 +120,12 @@ It runs **one image** at multiple values of one parameter (resolution, relief he
 3. Pick the settings that look best
 4. Use those settings in `tamp_batch_gui_v2.ipynb` for the full batch
 
+The figure below shows an example comparison matrix — each row sweeps one parameter while holding the others fixed. This makes it easy to isolate the effect of blur, relief height, and resolution independently.
+
+![Parameter comparison matrix](assets/matrix-comparison_2.png)
+
+*Top row: blur sweep (resolution=256, relief=3.0 mm). Middle row: relief height sweep (resolution=256, blur=1.2). Bottom row: resolution sweep (relief=3.0 mm, blur=1.2).*
+
 ---
 
 ## 3D Visualization of Comparison Results
@@ -163,10 +177,12 @@ The right choice depends on your **machine**, **material**, and **time available
 
 ### 1. Prepare your image in ImageJ/Fiji
 
-- Convert to grayscale
-- For images with very fine detail (1–2 pixel precision), apply a Gaussian blur (radius = 1.0 pixel) — or use the blur setting in the GUI
 - **Crop out any scale bars, metadata bars, or annotations** at the bottom of the image — these will appear as raised features in the lithograph
 - Export as `.PNG` or `.JPG`
+
+> 💡 The pipeline converts your image to grayscale automatically. If you want finer control over which features become raised vs recessed (e.g. isolating a specific channel or adjusting contrast manually), convert to grayscale in ImageJ/Fiji before exporting — but this is optional, not required.
+
+> 💡 For images with very fine detail, you can apply a Gaussian blur (radius = 1.0 pixel) in ImageJ/Fiji before exporting, or simply adjust the blur parameter in the GUI.
 
 ---
 
