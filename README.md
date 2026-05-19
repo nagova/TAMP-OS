@@ -11,9 +11,11 @@ Robert Faulkner, Natalia Gonzalez-Vazquez, Victoria Gamez, Karly E. Cohen, Gunth
 
 ## What is TAMP-OS
 
-TAMP converts microscopy images into 3D-printed tactile lithographs — making scientific imagery accessible to blind and visually impaired people. The original workflow used Bambu Lab hardware.
+> **Built on [TAMP](https://github.com/Aschulz94/TAMP)** — the original Tactile Accessible Microscopy Printing workflow (Faulkner et al., *Science* 2026), which converts microscopy images into 3D-printed tactile lithographs using Bambu Lab hardware. The original workflow, figures, and README are preserved in [`tamp_original/`](tamp_original/).
 
-**TAMP-OS replaces the proprietary Bambu Lab dependency with a fully open-source pipeline** that works with any FDM printer, gives full scripting control, and requires no hardware lock-in.
+TAMP makes scientific imagery accessible to blind and visually impaired people by converting microscopy images into 3D-printed tactile lithographs. The original workflow depended on Bambu Lab hardware and the proprietary Bambu Maker Lab slicer.
+
+**TAMP-OS replaces that proprietary dependency with a fully open-source pipeline** that works with any FDM printer, gives full scripting control, and requires no hardware lock-in.
 
 ```
 Microscopy Image → Height Map → STL → G-code → Any open-source printer → Tactile Lithograph
