@@ -349,7 +349,14 @@ The authors are grateful for the support of the **Tactile Media Alliance**. A.K.
 
 ## Contact
 
-This repository is maintained by [Andrew Schulz](https://github.com/Aschulz94) and collaborators. For questions about TAMP-OS, open an issue on [GitHub](https://github.com/nagova/TAMP-OS/issues).
+Authored and maintained by:
+
+- **Natalia Gonzalez-Vazquez** — https://github.com/nagova
+- **Andrew K. Schulz** — https://github.com/Aschulz94
+
+For questions or issues, open a ticket on [GitHub](https://github.com/nagova/TAMP-OS/issues).
+
+If you find this repository useful, consider giving it a ⭐
 
 ---
 
