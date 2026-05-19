@@ -4,3 +4,4 @@ output/
 *.stl
 *.gcode
 .DS_Store
+*.7z
