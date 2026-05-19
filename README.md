@@ -1,5 +1,7 @@
 # TAMP-OS
 
+![TAMP-OS pipeline](assets/tamp_os_header.png)
+
 **TAMP-OS** is an open-source extension of the [TAMP](https://github.com/Aschulz94/TAMP) (Tactile Accessible Microscopy Printing) workflow for converting microscopy images into 3D-printable tactile lithographs, published in [*Science*](https://www.science.org/doi/10.1126/science.adx8981).
 Robert Faulkner, Natalia Gonzalez-Vazquez, Victoria Gamez, Karly E. Cohen, Gunther Richter, Abigale Stangl, Andrew K. Schulz
 
