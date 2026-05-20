@@ -2,7 +2,7 @@
 
 ![TAMP-OS pipeline](assets/tamp_os_header.png)
 
-**TAMP-OS** is an open-source extension and update of the original [TAMP](https://github.com/Aschulz94/TAMP) (Tactile Accessible Microscopy Printing) workflow for converting microscopy images into 3D-printable tactile lithographs. The original TAMP workflow was used by the co-authors to create 3D-printable lithographs of scanning electron microscopy images with additional details found in the supplemental materials of the publication [*Science*](https://www.science.org/doi/10.1126/science.adx8981). 
+**TAMP-OS** is an open-source extension and update of the original [TAMP](https://github.com/Aschulz94/TAMP) (Tactile Accessible Microscopy Printing) workflow for converting microscopy images into 3D-printable tactile lithographs. The original TAMP workflow was used by the co-authors to create 3D-printable lithographs of scanning electron microscopy images with additional details found in the supplemental materials of the publication, [*Science*](https://www.science.org/doi/10.1126/science.adx8981) publication. 
 
 After the publication, we received requests to make the workflow more streamlined and open-source, which is this extension page. This updated workflow has been submitted for publication and is currently under review, entitled "TAMP-OS: Tactile accessible microscopy printing workflow for open-source creation of 3D printable lithographs", by Natalia Gonzalez-Vazquez, Robert Faulkner, Victoria Gamez, Karly E. Cohen, Gunther Richter, Abigale Stang, and Andrew K. Schulz. Below there are easy access buttons to the original publication, preprint for TAMP-OS, and Edmond repository of the microscopy data used in this publication. 
 
