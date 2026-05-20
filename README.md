@@ -71,7 +71,7 @@ This pipeline uses only open-source tools and works with any FDM printer.
 
 ---
 
-## Getting Started from Zero
+## Getting Started for non Python users 
 
 Follow these steps if you have never used Python before.
 
