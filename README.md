@@ -152,7 +152,7 @@ It runs **one image** at multiple values of one parameter (resolution, relief he
 
 The figure below shows an example comparison matrix — each row sweeps one parameter while holding the others fixed. This makes it easy to isolate the effect of blur, relief height, and resolution independently.
 
-![Parameter comparison matrix](assets/matrix-comparison_2.png)
+![Parameter comparison matrix](assets/new-trunk.png)
 
 *Top row: blur sweep (resolution=256, relief=3.0 mm). Middle row: relief height sweep (resolution=256, blur=1.2). Bottom row: resolution sweep (relief=3.0 mm, blur=1.2).*
 
