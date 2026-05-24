@@ -1,4 +1,4 @@
-# TAMP-OS
+# TAMP-OS: Tactially accesible microscopy printing (open-source)
 
 ![TAMP-OS pipeline](assets/tamp_os_header2.png)
 
