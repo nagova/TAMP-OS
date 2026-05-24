@@ -154,7 +154,7 @@ The figure below shows an example comparison matrix — each row sweeps one para
 
 ![Parameter comparison matrix](assets/new-trunk.png)
 
-*Top row: blur sweep (resolution=256, relief=3.0 mm). Middle row: relief height sweep (resolution=256, blur=1.2). Bottom row: resolution sweep (relief=3.0 mm, blur=1.2).*
+*left column: blur sweep (resolution=256, relief=3.0 mm). Middle column: relief height sweep (resolution=256, blur=1.2). Right row: resolution sweep (relief=3.0 mm, blur=1.2).*
 
 ---
 
