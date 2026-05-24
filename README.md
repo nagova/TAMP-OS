@@ -1,12 +1,14 @@
-# TAMP-OS: Tactially accesible microscopy printing (open-source)
+# TAMP-OS: Tactile Accesible Microscopy Printing (Open-Source)
 
 ![TAMP-OS pipeline](assets/tamp_os_header2.png)
 
 **TAMP-OS** is an open-source extension and update of the original [TAMP](https://github.com/Aschulz94/TAMP) (Tactile Accessible Microscopy Printing) workflow for converting microscopy images into 3D-printable tactile lithographs. The original TAMP workflow was used by the co-authors to create 3D-printable lithographs of scanning electron microscopy images with additional details found in the supplemental materials of the [*Science*](https://www.science.org/doi/10.1126/science.adx8981) publication. 
 
+[![Science paper](https://img.shields.io/badge/Science-adx8981-B31B1B.svg)](https://www.science.org/doi/10.1126/science.adx8981)
+
 After the publication, we received requests to make the workflow more streamlined and open-source, which is this extension page. This updated workflow has been submitted for publication and is currently under review, entitled "TAMP-OS: Tactile accessible microscopy printing workflow for open-source creation of 3D printable lithographs", by Natalia Gonzalez-Vazquez, Robert Faulkner, Victoria Gamez, Karly E. Cohen, Gunther Richter, Abigale Stang, and Andrew K. Schulz. Below there are easy access buttons to the original publication, preprint for TAMP-OS, and Edmond repository of the microscopy data used in this publication. 
 
-[![Science paper](https://img.shields.io/badge/Science-adx8981-B31B1B.svg)](https://www.science.org/doi/10.1126/science.adx8981) [![Edmond](https://img.shields.io/badge/Edmond-Data-0068B4.svg)](https://edmond.mpg.de) [![GitHub TAMP](https://img.shields.io/badge/GitHub-TAMP-OS--181717.svg?logo=github)](https://github.com/nagova/TAMP-OS) [![arXiv](https://img.shields.io/badge/arXiv-Preprint-B31B1B.svg)](https://arxiv.org/abs/2603.16801) 
+[![Edmond](https://img.shields.io/badge/Edmond-Data-0068B4.svg)](https://edmond.mpg.de) [![GitHub TAMP](https://img.shields.io/badge/GitHub-TAMP-OS--181717.svg?logo=github)](https://github.com/nagova/TAMP-OS) [![arXiv](https://img.shields.io/badge/arXiv-Preprint-B31B1B.svg)](https://arxiv.org/abs/2603.16801) 
 
 ---
 
