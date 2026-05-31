@@ -1,4 +1,4 @@
-# TAMP-OS: Tactile Accesible Microscopy Printing (Open-Source)
+# TAMP-OS: Tactile Accessible Microscopy Printing (Open-Source)
 
 ![TAMP-OS pipeline](assets/Figure1_SICB2026_v2.png)
 
