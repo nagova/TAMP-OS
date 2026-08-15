@@ -1,7 +1,21 @@
 __pycache__/
 *.pyc
+.DS_Store
+*.7z
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Generated mesh and print files
 output/
 *.stl
 *.gcode
-.DS_Store
-*.7z
+*.3mf
+*.glb
+
+# Lab data — sweep outputs and renders stay local, never commit these
+comparison_output/
+comparison_*/
+individual_renders/
+zoom_renders/
+pyvista-objeto falico/
