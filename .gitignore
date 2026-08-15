@@ -13,9 +13,11 @@ output/
 *.3mf
 *.glb
 
-# Lab data — sweep outputs and renders stay local, never commit these
+# MPI-IS — internal lab data. Everything in here stays local, never goes to GitHub.
+MPI-IS/
+
+# Sweep outputs and renders, in case they are generated outside MPI-IS/
 comparison_output/
 comparison_*/
 individual_renders/
 zoom_renders/
-pyvista-objeto falico/
