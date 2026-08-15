@@ -1,8 +1,26 @@
 # TAMP-OS Open-Source Lithograph Maker — Python dependencies
+#
+# Install everything with:
+#     pip install -r requirements.txt
+#
+# Requires Python 3.10 or newer. Tkinter is used for the GUI and ships with
+# python.org and conda installs — on Debian/Ubuntu install it separately with
+#     sudo apt install python3-tk
+
+# --- Core: required by all notebooks ---
 numpy>=1.24
 Pillow>=10.0
 scipy>=1.11
 numpy-stl>=3.0
 
-# Optional — only needed for direct Klipper/Moonraker upload
-requests>=2.31
+# --- Notebook environment: required to open and run any of the notebooks ---
+# Jupyter Lab or Jupyter Notebook only — the GUI opens a native Tkinter window
+# and will not work in the VS Code notebook viewer.
+jupyterlab>=4.0
+
+# --- Required by tamp_resolution_compare.ipynb (parameter sweeps) ---
+matplotlib>=3.7
+
+# --- Required by pyvista_image-generator.ipynb (3D renders of comparison STLs) ---
+pyvista>=0.43
+trame>=3.0
