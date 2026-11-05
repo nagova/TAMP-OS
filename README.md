@@ -80,6 +80,7 @@ This pipeline uses only open-source tools and works with any FDM printer.
 
 | File | Format | Description |
 |--------|--------|-------------|
+| [`image_check/tamp_image_check.ipynb`](image_check/) | Jupyter notebook | **Will my image work?** Checks one image before printing (structure size on the print, noise, colour, uneven illumination, scale bars, polarity) and tells you how to fix each problem, with a TAMP-OS setting or an ImageJ/Fiji step. See [`image_check/README.md`](image_check/README.md) |
 | `tamp_resolution_compare.ipynb` | Jupyter notebook | **Quality checking tool.** Run one image at multiple resolution, relief height, or blur values to find the best settings before a full batch run |
 | `pyvista_image-generator.ipynb` | Jupyter notebook | **3D visualization tool.** Renders every STL in your comparison folder as a 3D screenshot (full view + zoom), useful for figures and presentations |
 
@@ -147,6 +148,16 @@ By default, one quality setting applies to the whole batch. For mixed image sets
 5. Click **Generate print files**
 
 The default output is `.STL`. Open **Full customization** only when you need to change print size, nozzle diameter, layer height, relief height, blur, resolution, base thickness, flip, or invert relief.
+
+---
+
+## Will My Image Work? (Image Check)
+
+Before printing, check your image with [`image_check/tamp_image_check.ipynb`](image_check/). It uses the same processing as the GUI, simulates what the printer can reproduce, and tells you what will go wrong and how to fix it: crop out scale bars, invert a bright background, flatten uneven illumination, export one colour channel, add blur for noisy images, or crop/print wider when structures are too small to feel.
+
+![Image map](image_check/assets/image_map.png)
+
+Full guide, example gallery and how it works: **[`image_check/README.md`](image_check/README.md)**.
 
 ---
 
@@ -320,6 +331,7 @@ Input: `SEM_5um_raw.png` — FePt spherical particles, 5 µm scale
 | File | Description |
 |------|-------------|
 | `tamp_batch_gui_v2.ipynb` | **Main tool** — batch GUI with quality presets |
+| `image_check/` | Supporting — will my image work? Notebook, guide, figures and example images |
 | `tamp_resolution_compare.ipynb` | Supporting — quality checking before batch runs |
 | `pyvista_image-generator.ipynb` | Supporting — 3D rendering of comparison STLs for figures |
 | `requirements.txt` | Python dependencies |

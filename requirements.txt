@@ -18,7 +18,7 @@ numpy-stl>=3.0
 # and will not work in the VS Code notebook viewer.
 jupyterlab>=4.0
 
-# --- Required by tamp_resolution_compare.ipynb (parameter sweeps) ---
+# --- Required by tamp_resolution_compare.ipynb and image_check/tamp_image_check.ipynb ---
 matplotlib>=3.7
 
 # --- Required by pyvista_image-generator.ipynb (3D renders of comparison STLs) ---

@@ -21,3 +21,10 @@ comparison_output/
 comparison_*/
 individual_renders/
 zoom_renders/
+
+# Posters and presentation assets
+*.svg
+assets/3D_Printed_Matrix_STLs/
+
+# outputs of image_check/tamp_image_check.ipynb Step 5
+*_fixed.png
