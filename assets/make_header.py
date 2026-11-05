@@ -42,7 +42,7 @@ ax.plot([0.55, 7.5], [3.72, 3.72], color=ACCENT, linewidth=1.2, alpha=0.5)
 
 # Built-on attribution
 ax.text(0.55, 3.42,
-        "Built on  TAMP  (Faulkner et al., Science 2026)",
+        "Built on  TAMP  (Faulkner et al.)",
         color=MUTED, fontsize=9, fontfamily="DejaVu Sans", va="center",
         style="italic")
 

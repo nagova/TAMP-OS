@@ -14,19 +14,17 @@ Natalia Gonzalez-Vazquez, Robert Faulkner, Victoria Gamez, Karly E. Cohen, Gunth
        width="100%">
 </div>
 
-**TAMP-OS** is an open-source extension and update of the original [TAMP](https://github.com/Aschulz94/TAMP) (Tactile Accessible Microscopy Printing) workflow for converting microscopy images into 3D-printable tactile lithographs. The original TAMP workflow was used by the co-authors to create 3D-printable lithographs of scanning electron microscopy images with additional details found in the supplemental materials of the [*Science*](https://www.science.org/doi/10.1126/science.adx8981) publication. 
+**TAMP-OS** is an open-source extension and update of the original [TAMP](https://github.com/Aschulz94/TAMP) (Tactile Accessible Microscopy Printing) workflow for converting microscopy images into 3D-printable tactile lithographs.
 
-[![Science paper](https://img.shields.io/badge/Science-adx8981-B31B1B.svg)](https://www.science.org/doi/10.1126/science.adx8981)
+This workflow is published in *Integrative and Comparative Biology* as **"TAMP-OS: An Open-Source Workflow for Tactile 3D-Printable Lithographs"**, by Natalia Gonzalez-Vazquez, Robert Faulkner, Victoria Gamez, Karly E. Cohen, Gunther Richter, Abigale Stangl, and Andrew K. Schulz. Below are links to the published paper, preprint, Edmond data repository, and this repository:
 
-After the publication, we received requests to make the workflow more streamlined and open-source, which is this extension page. This updated workflow has been submitted for publication and is currently under review, entitled "TAMP-OS: Tactile accessible microscopy printing workflow for open-source creation of 3D printable lithographs", by Natalia Gonzalez-Vazquez, Robert Faulkner, Victoria Gamez, Karly E. Cohen, Gunther Richter, Abigale Stang, and Andrew K. Schulz. Below there are easy access buttons to the original publication, preprint for TAMP-OS, and Edmond repository of the microscopy data used in this publication. 
-
-[![ICB Publication](https://img.shields.io/badge/ICB-paper-B31B1B.svg)](https://academic.oup.com/icb/advance-article/doi/10.1093/icb/icag071/8700636) [![arXiv](https://img.shields.io/badge/arXiv-Preprint-B31B1B.svg)](https://arxiv.org/abs/2603.16801) [![Edmond](https://img.shields.io/badge/Edmond-Data-0068B4.svg)](https://edmond.mpg.de) [![GitHub TAMP](https://img.shields.io/badge/GitHub-TAMP-OS--181717.svg?logo=github)](https://github.com/nagova/TAMP-OS)  
+[![ICB Publication](https://img.shields.io/badge/ICB-paper-B31B1B.svg)](https://academic.oup.com/icb/article/doi/10.1093/icb/icag071/8700636) [![arXiv](https://img.shields.io/badge/arXiv-Preprint-B31B1B.svg)](https://arxiv.org/abs/2603.16801) [![Edmond](https://img.shields.io/badge/Edmond-Data-0068B4.svg)](https://edmond.mpg.de) [![GitHub TAMP-OS](https://img.shields.io/badge/GitHub-TAMP--OS-181717.svg?logo=github)](https://github.com/nagova/TAMP-OS)
 
 ---
 
 ## What is TAMP-OS
 
-> **Built on [TAMP](https://github.com/Aschulz94/TAMP)** — the original Tactile Accessible Microscopy Printing workflow (Faulkner et al., *Science* 2026), which converts microscopy images into 3D-printed tactile lithographs using Bambu Lab hardware. The original workflow, figures, and README are preserved in [`tamp_original/`](tamp_original/).
+> **Built on [TAMP](https://github.com/Aschulz94/TAMP)** — the original Tactile Accessible Microscopy Printing workflow (Faulkner et al.), which converts microscopy images into 3D-printed tactile lithographs using Bambu Lab hardware. The original workflow, figures, and README are preserved in [`tamp_original/`](tamp_original/).
 
 TAMP makes scientific imagery accessible to blind and visually impaired people by converting microscopy images into 3D-printed tactile lithographs. The original workflow depended on Bambu Lab hardware and the proprietary Bambu Maker Lab slicer.
 
@@ -355,14 +353,15 @@ All notebooks are self-contained — no external scripts needed. The pipeline ru
 If you use TAMP-OS in your work, please cite:
 
 ```bibtex
-@article{faulkner_tamp_2026,
-  title   = {A low-data, low-cost, and open-source workflow for 3D printing lithographs
-             for digital accessibility of microscopy images},
-  author  = {Faulkner, Robert and Gonzalez-Vazquez, Natalia and Gamez, Victoria and
+@article{gonzalez_vazquez_tamp_2026,
+  title   = {TAMP-OS: An Open-Source Workflow for Tactile 3D-Printable Lithographs},
+  author  = {Gonzalez-Vazquez, Natalia and Faulkner, Robert and Gamez, Victoria and
              Cohen, Karly E. and Richter, Gunther and Stangl, Abigale and Schulz, Andrew K.},
-  journal = {Science},
+  journal = {Integrative and Comparative Biology},
+  volume  = {66},
   year    = {2026},
-  doi     = {10.1126/science.adx8981},
+  doi     = {10.1093/icb/icag071},
+  url     = {https://academic.oup.com/icb/article/doi/10.1093/icb/icag071/8700636}
 }
 ```
 
