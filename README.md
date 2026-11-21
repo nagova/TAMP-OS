@@ -15,7 +15,7 @@
 
 ## 1. Cómo lanzar
 
-TAMP-OS v2 integra en una sola aplicación de escritorio autónoma (`tamp-os_gui.py`) tanto el flujo clásico de litografías en escala de grises como la nueva tecnología **TAMP-OS Chroma** para gradientes y mapas de color multicanal.
+TAMP-OS v2 integra en una sola aplicación de escritorio autónoma (`tamp_os_gui.py`) tanto el flujo clásico de litografías en escala de grises como la nueva tecnología **TAMP-OS Chroma** para gradientes y mapas de color multicanal.
 
 ### Requisitos del Sistema
 - **Python:** 3.9 o superior (probado en Windows, Linux y macOS).
@@ -42,7 +42,7 @@ TAMP-OS v2 integra en una sola aplicación de escritorio autónoma (`tamp-os_gui
 Ejecuta el script principal con un solo comando:
 
 ```bash
-python tamp-os_gui.py
+python tamp_os_gui.py
 ```
 
 ![TAMP-OS GUI Mockup](assets/chroma_gui_mockup.jpg)

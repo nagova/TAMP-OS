@@ -9,7 +9,7 @@ Unified interface supporting both:
      with macroscopic ramp + micro-texture modulation.
 
 Run:
-  python tamp_gui.py
+  python tamp_os_gui.py
 """
 
 import os
@@ -452,24 +452,42 @@ def get_colormap_tree(colormap_name):
     return lut, tree
 
 
-def decode_colormap(img_pil, colormap_name="Inferno"):
+def decode_colormap(img_pil, colormap_name="Inferno", return_fallback_status=False):
     """
     Fast RGB-to-scalar projection using scipy.spatial.cKDTree.
     Returns normalized scalar array [0, 1] of shape (H, W).
+    If return_fallback_status=True, returns (scalar, fell_back_to_luminance).
     """
     if colormap_name == "Luminance":
         gray = img_pil.convert("L")
-        return np.array(gray, dtype=np.float32) / 255.0
+        res = np.array(gray, dtype=np.float32) / 255.0
+        return (res, False) if return_fallback_status else res
 
     rgb = img_pil.convert("RGB")
     arr = np.array(rgb, dtype=np.float32) / 255.0
     h, w, _ = arr.shape
-    flat_rgb = arr.reshape(-1, 3)
 
+    # Check if image is grayscale (R ≈ G ≈ B)
+    diff_rg = float(np.mean(np.abs(arr[:, :, 0] - arr[:, :, 1])))
+    diff_rb = float(np.mean(np.abs(arr[:, :, 0] - arr[:, :, 2])))
+    if diff_rg < 0.02 and diff_rb < 0.02:
+        gray = img_pil.convert("L")
+        res = np.array(gray, dtype=np.float32) / 255.0
+        return (res, True) if return_fallback_status else res
+
+    flat_rgb = arr.reshape(-1, 3)
     lut, tree = get_colormap_tree(colormap_name)
-    _, indices = tree.query(flat_rgb)
+    dists, indices = tree.query(flat_rgb)
+    mean_dist = float(np.mean(dists))
+
+    # If mean distance to colormap is large, fall back to Luminance
+    if mean_dist > 0.15:
+        gray = img_pil.convert("L")
+        res = np.array(gray, dtype=np.float32) / 255.0
+        return (res, True) if return_fallback_status else res
+
     scalar = (indices / 255.0).reshape(h, w).astype(np.float32)
-    return scalar
+    return (scalar, False) if return_fallback_status else scalar
 
 
 def build_ramp(rows, cols, physical_size_mm, ramp_elevation_mm, direction="horizontal"):
@@ -562,53 +580,56 @@ def apply_texture(scalar_field, texture_type, physical_size_mm, relief_mm, polar
 def draw_texture_icon(canvas, texture_name, is_selected=False):
     """Draw a clean, resolution-independent vector pattern inside a small canvas."""
     canvas.delete("all")
-    w = canvas.winfo_width() or 46
-    h = canvas.winfo_height() or 34
+    try:
+        w = int(canvas.cget("width"))
+    except Exception:
+        w = 44
+    try:
+        h = int(canvas.cget("height"))
+    except Exception:
+        h = 30
+
     fg = "#2563EB" if is_selected else "#64748B"
     bg = "#EFF6FF" if is_selected else "#FFFFFF"
     canvas.configure(bg=bg)
 
     if texture_name == "Dots":
-        # Staggered dots
+        # 3 staggered rows centered in (44, 30)
+        r_dot = 2.0
         for row in range(3):
-            y = 7 + row * 10
-            x_off = 6 if row % 2 == 1 else 0
-            for col in range(4):
-                x = 8 + col * 10 + x_off
-                if x < w - 6:
-                    canvas.create_oval(x - 2.5, y - 2.5, x + 2.5, y + 2.5, fill=fg, outline="")
+            y = 6.0 + row * 9.0
+            xs = [8.0, 17.0, 26.0, 35.0] if row % 2 == 0 else [12.5, 21.5, 30.5]
+            for x in xs:
+                canvas.create_oval(x - r_dot, y - r_dot, x + r_dot, y + r_dot, fill=fg, outline="")
 
     elif texture_name == "Stripes":
-        for x in [10, 18, 26, 34]:
-            canvas.create_line(x, 5, x, h - 5, fill=fg, width=2.5)
+        for x in [11, 19, 27, 35]:
+            canvas.create_line(x, 5, x, h - 5, fill=fg, width=2.2)
 
     elif texture_name == "Grid":
-        for x in [12, 23, 34]:
-            canvas.create_line(x, 5, x, h - 5, fill=fg, width=1.8)
-        for y in [9, 17, 25]:
-            canvas.create_line(6, y, w - 6, y, fill=fg, width=1.8)
+        for x in [12, 22, 32]:
+            canvas.create_line(x, 5, x, h - 5, fill=fg, width=1.6)
+        for y in [7, 15, 23]:
+            canvas.create_line(6, y, w - 6, y, fill=fg, width=1.6)
 
     elif texture_name == "Waves":
-        pts = []
-        for xi in range(6, w - 6, 2):
-            yi = 17 + int(6.0 * math.sin(xi * 0.28))
-            pts.extend([xi, yi])
-        if len(pts) >= 4:
-            canvas.create_line(*pts, fill=fg, width=2.2, smooth=True)
-            # Second parallel wave
-            pts2 = [p if i % 2 == 0 else p + 8 for i, p in enumerate(pts)]
+        pts1, pts2 = [], []
+        for xi in range(6, w - 5, 2):
+            phase = (xi - 6) / max(1, (w - 12)) * 2 * math.pi
+            pts1.extend([xi, 10 + int(4.0 * math.sin(phase))])
+            pts2.extend([xi, 20 + int(4.0 * math.sin(phase))])
+        if len(pts1) >= 4:
+            canvas.create_line(*pts1, fill=fg, width=1.8, smooth=True)
             canvas.create_line(*pts2, fill=fg, width=1.8, smooth=True)
 
     elif texture_name == "Scales":
         # Scallop arches
-        for row in range(2):
-            y = 12 + row * 11
-            x_off = 7 if row % 2 == 1 else 0
-            for col in range(3):
-                x = 7 + col * 14 + x_off
-                if x + 12 < w:
-                    canvas.create_arc(x, y - 6, x + 12, y + 6, start=0, extent=180,
-                                      style="arc", outline=fg, width=1.8)
+        for x in [6, 17, 28]:
+            canvas.create_arc(x, 12 - 5, x + 10, 12 + 5, start=0, extent=180,
+                              style="arc", outline=fg, width=1.6)
+        for x in [11.5, 22.5]:
+            canvas.create_arc(x, 20 - 5, x + 10, 20 + 5, start=0, extent=180,
+                              style="arc", outline=fg, width=1.6)
 
     elif texture_name == "Honeycomb":
         # Hexagonal rings
@@ -619,8 +640,8 @@ def draw_texture_icon(canvas, texture_name, is_selected=False):
                 pts.extend([cx + r * math.cos(ang), cy + r * math.sin(ang)])
             return pts
 
-        canvas.create_polygon(hex_pts(16, 17, 7.5), outline=fg, fill="", width=1.6)
-        canvas.create_polygon(hex_pts(30, 17, 7.5), outline=fg, fill="", width=1.6)
+        canvas.create_polygon(hex_pts(15, 15, 7.0), outline=fg, fill="", width=1.6)
+        canvas.create_polygon(hex_pts(29, 15, 7.0), outline=fg, fill="", width=1.6)
 
 
 
@@ -721,21 +742,7 @@ class TAMPGUI:
         self.mode_seg.set("TAMP-OS" if self.mode == "os" else "TAMP-OS Chroma")
         self.mode_seg.pack(side="right", padx=14)
 
-        # 2. Main 2-Column Content Split
-        main_content = ctk.CTkFrame(self.root, fg_color="transparent")
-        main_content.pack(fill="both", expand=True, padx=16, pady=(10, 6))
-
-        # Left Column (Images & Live Preview)
-        self.left_col = ctk.CTkFrame(main_content, fg_color="transparent", width=560)
-        self.left_col.pack(side="left", fill="both", expand=True, padx=(0, 8))
-
-        # Right Column (Settings & Chroma parameters) - scrollable with smooth mousewheel
-        self.r_scroll = ctk.CTkScrollableFrame(
-            main_content, corner_radius=12, fg_color="transparent", width=560
-        )
-        self.r_scroll.pack(side="right", fill="both", expand=True, padx=(8, 0))
-
-        # 3. Bottom Action Bar
+        # 2. Bottom Action Bar (packed with side='bottom' before main_content to reserve 60 px)
         bottom_bar = ctk.CTkFrame(self.root, corner_radius=12, fg_color="#FFFFFF", border_width=1, border_color="#E2E8F0", height=60)
         bottom_bar.pack(side="bottom", fill="x", padx=16, pady=(0, 12))
         bottom_bar.pack_propagate(False)
@@ -762,6 +769,20 @@ class TAMPGUI:
             border_width=1, border_color="#CBD5E1", corner_radius=8,
             width=140, height=36, command=self._open_output_folder
         ).pack(side="right", padx=6, pady=12)
+
+        # 3. Main 2-Column Content Split
+        main_content = ctk.CTkFrame(self.root, fg_color="transparent")
+        main_content.pack(fill="both", expand=True, padx=16, pady=(10, 6))
+
+        # Left Column (Images & Live Preview)
+        self.left_col = ctk.CTkFrame(main_content, fg_color="transparent", width=560)
+        self.left_col.pack(side="left", fill="both", expand=True, padx=(0, 8))
+
+        # Right Column (Settings & Chroma parameters) - scrollable with smooth mousewheel
+        self.r_scroll = ctk.CTkScrollableFrame(
+            main_content, corner_radius=12, fg_color="transparent", width=560
+        )
+        self.r_scroll.pack(side="right", fill="both", expand=True, padx=(8, 0))
 
         # Build column internals
         self._build_left_column()
@@ -879,6 +900,11 @@ class TAMPGUI:
         self.plot_canvas = None
 
         # Helper hint text
+        self.lbl_colormap_fallback = ctk.CTkLabel(
+            self.card_preview, text="",
+            font=("Segoe UI", 10, "bold"), text_color="#D97706", anchor="w"
+        )
+
         self.lbl_preview_hint = ctk.CTkLabel(
             self.card_preview,
             text="Light = raised, dark = low. Check this before generating: if the feature you want to feel is sunk, tick Invert.",
@@ -922,13 +948,6 @@ class TAMPGUI:
         # Gradient Canvas preview bar
         self.cmap_canvas = tk.Canvas(cm_row, width=140, height=18, bd=1, relief="solid", highlightthickness=0)
         self.cmap_canvas.pack(side="left", padx=4)
-
-        # Polarity checkbox
-        pol_row = ctk.CTkFrame(self.card_chroma, fg_color="transparent")
-        pol_row.pack(fill="x", padx=16, pady=2)
-        ctk.CTkCheckBox(pol_row, text="Invert polarity (high values = flat/untextured)",
-                        variable=self.chroma_polarity_var, corner_radius=4, fg_color="#2563EB",
-                        text_color="#0F172A", font=("Segoe UI", 11), command=self._update_preview).pack(anchor="w")
 
         # Ramp elevation slider
         ramp_row = ctk.CTkFrame(self.card_chroma, fg_color="transparent")
@@ -1038,8 +1057,9 @@ class TAMPGUI:
         q_hdr.pack(fill="x", padx=16, pady=(12, 6))
         ctk.CTkLabel(q_hdr, text="3. Quality", font=("Segoe UI", 14, "bold"),
                      text_color="#0F172A").pack(side="left")
-        ctk.CTkLabel(q_hdr, text="Click a card to apply it to all images", font=("Segoe UI", 11),
-                     text_color="#64748B").pack(side="right")
+        self.lbl_quality_subtitle = ctk.CTkLabel(q_hdr, text="Click a card to apply it to all images", font=("Segoe UI", 11),
+                                                 text_color="#64748B")
+        self.lbl_quality_subtitle.pack(side="right")
 
         # 3 Side by side cards
         q_cards_frame = ctk.CTkFrame(self.card_quality, fg_color="transparent")
@@ -1164,7 +1184,7 @@ class TAMPGUI:
             r.pack(fill="x", padx=16, pady=3)
             ctk.CTkLabel(r, text=label_txt + ":", font=("Segoe UI", 10), text_color="#334155", width=160, anchor="w").pack(side="left")
             ctk.CTkEntry(r, textvariable=var, font=("Segoe UI", 10), width=80, height=28, corner_radius=6).pack(side="left", padx=6)
-            ctk.CTkLabel(r, text=hint, font=("Segoe UI", 9), text_color="#94A3B8").pack(side="left", padx=6)
+            ctk.CTkLabel(r, text=hint, font=("Segoe UI", 9), text_color="#475569").pack(side="left", padx=6)
 
         fl_row = ctk.CTkFrame(af, fg_color="transparent")
         fl_row.pack(fill="x", padx=16, pady=(6, 12))
@@ -1201,6 +1221,8 @@ class TAMPGUI:
     def _update_mode_ui(self):
         if self.mode == "os":
             self.card_chroma.pack_forget()
+            if hasattr(self, "lbl_colormap_fallback"):
+                self.lbl_colormap_fallback.pack_forget()
             self.th_invert_lbl.configure(text="Invert")
             self.lbl_preview_title.configure(text="Relief preview")
             self.lbl_preview_hint.configure(text="Light = raised, dark = low. Check this before generating: if the feature you want to feel is sunk, tick Invert.")
@@ -1351,7 +1373,7 @@ class TAMPGUI:
                         "width": analysis["width"],
                         "height": analysis["height"],
                         "quality": suggested,
-                        "invert": False,
+                        "invert": bool(self.cfg.get("chroma_polarity_inverted", False)) if self.mode == "chroma" else False,
                         "analysis": analysis
                     })
                     added_any = True
@@ -1428,21 +1450,22 @@ class TAMPGUI:
 
             thumb = self.thumbnail_cache.get(img["path"])
             if thumb:
-                t_lbl = ctk.CTkLabel(row_card, text="", image=thumb, width=36, height=36)
+                t_lbl = ctk.CTkLabel(row_card, text="", image=thumb, width=36, height=36, fg_color=card_bg)
                 t_lbl.pack(side="left", padx=(8, 6), pady=6)
                 t_lbl.bind("<Button-1>", make_row_click(idx))
 
             # Text Block
-            txt_box = ctk.CTkFrame(row_card, fg_color="transparent")
+            txt_box = ctk.CTkFrame(row_card, fg_color=card_bg)
             txt_box.pack(side="left", fill="both", expand=True, padx=4)
             txt_box.bind("<Button-1>", make_row_click(idx))
 
-            n_lbl = ctk.CTkLabel(txt_box, text=img["name"], font=("Segoe UI", 11, "bold"), text_color="#0F172A", anchor="w")
+            n_lbl = ctk.CTkLabel(txt_box, text=img["name"], font=("Segoe UI", 11, "bold"), text_color="#0F172A", anchor="w", fg_color=card_bg)
             n_lbl.pack(anchor="w", pady=(4, 0))
             n_lbl.bind("<Button-1>", make_row_click(idx))
 
-            sub_txt = f"{img['width']} × {img['height']} px · suggested {img['analysis'].get('exposure', '')[:10]}"
-            s_lbl = ctk.CTkLabel(txt_box, text=sub_txt, font=("Segoe UI", 9), text_color="#64748B", anchor="w")
+            rec_preset = recommend_preset_from_analysis(img["analysis"])
+            sub_txt = f"{img['width']} × {img['height']} px · suggested {rec_preset}"
+            s_lbl = ctk.CTkLabel(txt_box, text=sub_txt, font=("Segoe UI", 9), text_color="#64748B", anchor="w", fg_color=card_bg)
             s_lbl.pack(anchor="w", pady=(0, 4))
             s_lbl.bind("<Button-1>", make_row_click(idx))
 
@@ -1452,6 +1475,7 @@ class TAMPGUI:
                     self.images_data[i]["quality"] = choice
                     self._update_preview()
                     self._update_status_summary()
+                    self._update_recommendation_banner()
                 return handler
 
             q_cb = ctk.CTkComboBox(row_card, values=["Low", "Medium", "High"], state="readonly", width=82, height=26, corner_radius=6,
@@ -1491,24 +1515,39 @@ class TAMPGUI:
     def _update_recommendation_banner(self):
         if not self.images_data:
             self.lbl_suggestion.configure(text="Add images to see resolution guidance.")
+            if hasattr(self, "lbl_quality_subtitle"):
+                self.lbl_quality_subtitle.configure(text="Click a card to apply it to all images", text_color="#64748B")
             for name, w in self.q_cards.items():
                 w["frame"].configure(fg_color="#F8FAFC", border_color="#E2E8F0", border_width=1.5)
                 w["badge"].pack_forget()
             return
 
-        presets = [img["quality"] for img in self.images_data]
-        rec = max(["Low", "Medium", "High"], key=presets.count)
+        rec_presets = [recommend_preset_from_analysis(img["analysis"]) for img in self.images_data]
+        rec = max(["Low", "Medium", "High"], key=rec_presets.count)
         self.suggested_overall_preset = rec
         avg_range = sum(img["analysis"]["dynamic_range"] for img in self.images_data) / len(self.images_data)
 
-        self.lbl_suggestion.configure(
-            text=f"For these images we suggest {rec} (average contrast {avg_range:.0f}/255)."
-        )
+        qualities = set(img["quality"] for img in self.images_data)
+        if len(qualities) == 1:
+            shared_quality = list(qualities)[0]
+            self.selected_preset_var.set(shared_quality)
+            if hasattr(self, "lbl_quality_subtitle"):
+                self.lbl_quality_subtitle.configure(text="Click a card to apply it to all images", text_color="#64748B")
+            self.lbl_suggestion.configure(
+                text=f"For these images we suggest {rec} (average contrast {avg_range:.0f}/255)."
+            )
+        else:
+            shared_quality = None
+            self.selected_preset_var.set("")
+            if hasattr(self, "lbl_quality_subtitle"):
+                self.lbl_quality_subtitle.configure(text="Images use different qualities", text_color="#D97706")
+            self.lbl_suggestion.configure(
+                text=f"Images use different qualities · Suggestion: {rec} (contrast {avg_range:.0f}/255)."
+            )
 
-        # Update quality card highlights
-        sel_preset = self.selected_preset_var.get()
+        # Update quality card highlights: only highlight if all images share that quality
         for name, w in self.q_cards.items():
-            is_sel = (name == sel_preset)
+            is_sel = (name == shared_quality) if shared_quality else False
             w["frame"].configure(
                 fg_color="#EFF6FF" if is_sel else "#F8FAFC",
                 border_color="#2563EB" if is_sel else "#E2E8F0",
@@ -1565,6 +1604,7 @@ class TAMPGUI:
             return
 
         if self.mode == "os":
+            self.lbl_colormap_fallback.pack_forget()
             gray = raw_img.convert("L").resize((target_cols, target_rows), Image.LANCZOS)
             arr = np.array(gray, dtype=np.float32) / 255.0
             if invert:
@@ -1589,14 +1629,20 @@ class TAMPGUI:
             colormap_name = self.chroma_colormap_var.get()
             ramp_elev = float(self.chroma_ramp_var.get())
             tex_relief = float(self.chroma_relief_var.get())
-            polarity_inv = bool(self.chroma_polarity_var.get())
+            polarity_inv = bool(invert)
 
             try:
                 base_thick = float(self.base_thickness_var.get())
             except Exception:
                 base_thick = 1.2
 
-            scalar_field = decode_colormap(raw_img, colormap_name=colormap_name)
+            scalar_field, fell_back = decode_colormap(raw_img, colormap_name=colormap_name, return_fallback_status=True)
+            if fell_back:
+                self.lbl_colormap_fallback.configure(text=f"Not a {colormap_name} image — using luminance")
+                self.lbl_colormap_fallback.pack(fill="x", padx=16, pady=(0, 4), before=self.lbl_preview_hint)
+            else:
+                self.lbl_colormap_fallback.pack_forget()
+
             s_resized = Image.fromarray((scalar_field * 255).astype(np.uint8)).resize(
                 (target_cols, target_rows), Image.BILINEAR
             )
@@ -1694,7 +1740,7 @@ class TAMPGUI:
             ramp_elev = float(self.chroma_ramp_var.get())
             tex_name = self.chroma_texture_var.get()
             tex_relief = float(self.chroma_relief_var.get())
-            pol_inv = bool(self.chroma_polarity_var.get())
+            pol_inv = bool(invert)
             base_thick = float(self.base_thickness_var.get())
 
             scalar_field = decode_colormap(raw, colormap_name=cm)
@@ -1827,7 +1873,7 @@ class TAMPGUI:
     def _generate_chroma_item(self, img_info, out_dir, stem, fmts):
         img_path = img_info["path"]
         quality = img_info["quality"]
-        polarity_inv = bool(img_info["invert"] or self.chroma_polarity_var.get())
+        polarity_inv = bool(img_info["invert"])
 
         cm = self.chroma_colormap_var.get()
         ramp_elev = float(self.chroma_ramp_var.get())
