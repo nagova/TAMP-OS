@@ -751,6 +751,36 @@ class TAMPGUI:
         self._build_left_column()
         self._build_right_column()
 
+        # Global mouse wheel scrolling across platforms
+        def _is_desc(widget, target):
+            cur = widget
+            while cur:
+                if cur == target:
+                    return True
+                try:
+                    cur = cur.master
+                except Exception:
+                    return False
+            return False
+
+        def _on_global_mousewheel(e):
+            delta = e.delta if e.delta else (-120 if getattr(e, 'num', None) == 5 else 120)
+            step = int(-1 * (delta / 120))
+            try:
+                w = self.root.winfo_containing(e.x_root, e.y_root)
+            except Exception:
+                return
+            if not w:
+                return
+            if hasattr(self, 'tbl_container') and _is_desc(w, self.tbl_container):
+                self.tbl_canvas.yview_scroll(step, "units")
+            elif hasattr(self, 'right_col') and _is_desc(w, self.right_col):
+                self.r_canvas.yview_scroll(step, "units")
+
+        self.root.bind_all("<MouseWheel>", _on_global_mousewheel)
+        self.root.bind_all("<Button-4>", _on_global_mousewheel)
+        self.root.bind_all("<Button-5>", _on_global_mousewheel)
+
     # --------------------------------------------------------------------------
     # LEFT COLUMN: IMAGES & PREVIEW
     # --------------------------------------------------------------------------
@@ -776,21 +806,29 @@ class TAMPGUI:
                   command=self._clear_images).pack(side=tk.RIGHT, padx=4)
 
         # Images Table
-        tbl_container = tk.Frame(f, bg="#F8FAFC", relief="solid", bd=1, height=130)
-        tbl_container.pack(fill=tk.X, padx=14, pady=4)
-        tbl_container.pack_propagate(False)
+        self.tbl_container = tk.Frame(f, bg="#F8FAFC", relief="solid", bd=1, height=130)
+        self.tbl_container.pack(fill=tk.X, padx=14, pady=4)
+        self.tbl_container.pack_propagate(False)
 
         # Table header
-        th = tk.Frame(tbl_container, bg="#E2E8F0")
+        th = tk.Frame(self.tbl_container, bg="#E2E8F0")
         th.pack(fill=tk.X)
-        tk.Label(th, text="Image", font=("Segoe UI", 8, "bold"), fg="#475569", bg="#E2E8F0", width=28, anchor="w").pack(side=tk.LEFT, padx=6, pady=3)
-        tk.Label(th, text="Quality", font=("Segoe UI", 8, "bold"), fg="#475569", bg="#E2E8F0", width=12, anchor="center").pack(side=tk.LEFT, padx=4, pady=3)
-        self.th_invert_lbl = tk.Label(th, text="Invert", font=("Segoe UI", 8, "bold"), fg="#475569", bg="#E2E8F0", width=10, anchor="center")
-        self.th_invert_lbl.pack(side=tk.LEFT, padx=4, pady=3)
+        th.columnconfigure(0, weight=1)
+        th.columnconfigure(1, minsize=86)
+        th.columnconfigure(2, minsize=80)
+        th.columnconfigure(3, minsize=34)
+        th.columnconfigure(4, minsize=17)
+
+        tk.Label(th, text="Image", font=("Segoe UI", 8, "bold"), fg="#475569", bg="#E2E8F0", anchor="w").grid(row=0, column=0, sticky="w", padx=(10, 4), pady=3)
+        tk.Label(th, text="Quality", font=("Segoe UI", 8, "bold"), fg="#475569", bg="#E2E8F0", anchor="center").grid(row=0, column=1, sticky="nsew", padx=2, pady=3)
+        self.th_invert_lbl = tk.Label(th, text="Invert", font=("Segoe UI", 8, "bold"), fg="#475569", bg="#E2E8F0", anchor="center")
+        self.th_invert_lbl.grid(row=0, column=2, sticky="nsew", padx=2, pady=3)
+        tk.Label(th, text="", bg="#E2E8F0").grid(row=0, column=3, sticky="nsew")
 
         # Scrollable image items list
-        self.tbl_canvas = tk.Canvas(tbl_container, bg="#FFFFFF", bd=0, highlightthickness=0)
-        tbl_scrollbar = ttk.Scrollbar(tbl_container, orient="vertical", command=self.tbl_canvas.yview)
+        self.tbl_canvas = tk.Canvas(self.tbl_container, bg="#FFFFFF", bd=0, highlightthickness=0)
+        tbl_scrollbar = ttk.Scrollbar(self.tbl_container, orient="vertical", command=self.tbl_canvas.yview)
+        tbl_scrollbar.bind("<Configure>", lambda e: th.columnconfigure(4, minsize=e.width) if e.width > 1 else None)
         self.tbl_inner = tk.Frame(self.tbl_canvas, bg="#FFFFFF")
         self.tbl_canvas.configure(yscrollcommand=tbl_scrollbar.set)
         tbl_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
@@ -862,13 +900,12 @@ class TAMPGUI:
         self.r_inner.bind("<Configure>", lambda e: r_canvas.configure(scrollregion=r_canvas.bbox("all")))
         r_canvas.bind("<Configure>", lambda e: r_canvas.itemconfig(r_win, width=e.width))
 
+        self.r_canvas = r_canvas
         rf = self.r_inner
 
         # -------------------- CHROMA CONTAINER (TOP OF RIGHT COL) --------------------
         self.chroma_container = tk.Frame(rf, bg="#FFFFFF")
-        self.chroma_container.pack(fill=tk.X, padx=0, pady=0)
         self.chroma_frame = tk.Frame(self.chroma_container, bg="#F8FAFC", bd=1, relief="solid")
-        self.chroma_frame.pack(fill=tk.X, padx=14, pady=(12, 6))
 
         ch_hdr = tk.Frame(self.chroma_frame, bg="#F8FAFC")
         ch_hdr.pack(fill=tk.X, padx=12, pady=(10, 4))
@@ -963,9 +1000,9 @@ class TAMPGUI:
         self._redraw_colormap_bar()
 
         # -------------------- SHARED: 2. PRINTER --------------------
-        p_hdr = tk.Frame(rf, bg="#FFFFFF")
-        p_hdr.pack(fill=tk.X, padx=14, pady=(10, 2))
-        tk.Label(p_hdr, text="2. Printer", font=("Segoe UI", 11, "bold"),
+        self.p_hdr = tk.Frame(rf, bg="#FFFFFF")
+        self.p_hdr.pack(fill=tk.X, padx=14, pady=(10, 2))
+        tk.Label(self.p_hdr, text="2. Printer", font=("Segoe UI", 11, "bold"),
                  fg="#0F172A", bg="#FFFFFF").pack(side=tk.LEFT)
 
         pr_row = tk.Frame(rf, bg="#FFFFFF")
@@ -1109,6 +1146,7 @@ class TAMPGUI:
             self.btn_mode_os.configure(bg="#2563EB", fg="#FFFFFF", relief="flat")
             self.btn_mode_chroma.configure(bg="#0F172A", fg="#94A3B8", relief="flat")
             self.chroma_frame.pack_forget()
+            self.chroma_container.pack_forget()
             self.th_invert_lbl.configure(text="Invert")
             self.lbl_preview_title.configure(text="Relief preview")
             self.lbl_preview_hint.configure(text="Light = raised, dark = low. Check this before generating: if the feature you want to feel is sunk, tick Invert.")
@@ -1118,12 +1156,18 @@ class TAMPGUI:
             self.btn_mode_os.configure(bg="#0F172A", fg="#94A3B8", relief="flat")
             self.btn_mode_chroma.configure(bg="#2563EB", fg="#FFFFFF", relief="flat")
             # Pack chroma frame inside container at top of right column
+            self.chroma_container.pack(fill=tk.X, padx=0, pady=0, before=self.p_hdr)
             self.chroma_frame.pack(fill=tk.X, padx=14, pady=(12, 6))
             self.th_invert_lbl.configure(text="Polarity")
             self.lbl_preview_title.configure(text="Live tactile preview")
             self.lbl_preview_hint.configure(text=f"Shaded relief with {self.chroma_texture_var.get()} texture. Grazing light shows how it will feel under the finger.")
             self.btn_generate.configure(text="Generate tactile files")
             self.plot_container.pack(fill=tk.X, padx=14, pady=(2, 6), before=self.lbl_preview_hint)
+
+        if hasattr(self, 'r_canvas') and hasattr(self, 'r_inner'):
+            self.r_canvas.yview_moveto(0.0)
+            self.r_inner.update_idletasks()
+            self.r_canvas.configure(scrollregion=self.r_canvas.bbox("all"))
 
         self._refresh_texture_buttons()
         self._update_status_summary()
@@ -1259,6 +1303,21 @@ class TAMPGUI:
         self._update_preview()
         self._update_status_summary()
 
+    def _remove_single_image(self, idx):
+        if 0 <= idx < len(self.images_data):
+            del self.images_data[idx]
+            if not self.images_data:
+                self.selected_idx = 0
+            elif self.selected_idx >= len(self.images_data):
+                self.selected_idx = len(self.images_data) - 1
+            elif self.selected_idx == idx:
+                self.selected_idx = max(0, min(idx, len(self.images_data) - 1))
+            elif self.selected_idx > idx:
+                self.selected_idx -= 1
+            self._refresh_image_table()
+            self._update_preview()
+            self._update_status_summary()
+
     def _refresh_image_table(self):
         for w in self.tbl_inner.winfo_children():
             w.destroy()
@@ -1278,18 +1337,22 @@ class TAMPGUI:
 
             row = tk.Frame(self.tbl_inner, bg=row_bg, cursor="hand2")
             row.pack(fill=tk.X, pady=1)
+            row.columnconfigure(0, weight=1)
+            row.columnconfigure(1, minsize=86)
+            row.columnconfigure(2, minsize=80)
+            row.columnconfigure(3, minsize=34)
 
             # Name & info label
             info_txt = f"{img['name']}\n{img['width']} × {img['height']} px · suggested {img['analysis'].get('exposure', '')[:10]}"
             n_lbl = tk.Label(row, text=info_txt, font=("Segoe UI", 8), fg="#0F172A", bg=row_bg,
-                             width=28, anchor="w", justify="left")
-            n_lbl.pack(side=tk.LEFT, padx=6, pady=2)
+                             anchor="w", justify="left")
+            n_lbl.grid(row=0, column=0, sticky="w", padx=(10, 4), pady=2)
 
             # Quality Combobox
             q_var = tk.StringVar(value=img["quality"])
             cb = ttk.Combobox(row, textvariable=q_var, values=["Low", "Medium", "High"],
                               state="readonly", width=8)
-            cb.pack(side=tk.LEFT, padx=4)
+            cb.grid(row=0, column=1, padx=4, pady=2)
 
             def make_q_change(i=idx, v=q_var):
                 def handler(e):
@@ -1306,7 +1369,7 @@ class TAMPGUI:
                                 bg="#EFF6FF" if img["invert"] else "#F1F5F9",
                                 fg="#2563EB" if img["invert"] else "#64748B",
                                 width=8, relief="flat")
-            inv_btn.pack(side=tk.LEFT, padx=4)
+            inv_btn.grid(row=0, column=2, padx=4, pady=2)
 
             def make_inv_toggle(i=idx, b=inv_btn):
                 def handler():
@@ -1318,6 +1381,14 @@ class TAMPGUI:
                 return handler
 
             inv_btn.configure(command=make_inv_toggle())
+
+            # Delete single image button (✕)
+            del_btn = tk.Button(row, text="✕", font=("Segoe UI", 9, "bold"),
+                                fg="#94A3B8", activeforeground="#EF4444",
+                                bg=row_bg, activebackground=row_bg,
+                                bd=0, relief="flat", cursor="hand2", padx=4, pady=1,
+                                command=lambda i=idx: self._remove_single_image(i))
+            del_btn.grid(row=0, column=3, padx=2, pady=2)
 
             # Row click selection
             def make_row_click(i=idx):
@@ -1383,7 +1454,11 @@ class TAMPGUI:
         target_cols = min(256, q_res)  # Fast preview resolution
         target_rows = max(2, int(round(target_cols * aspect)))
 
-        raw_img = Image.open(img_path)
+        try:
+            raw_img = Image.open(img_path)
+        except Exception as e:
+            self.lbl_preview_image.configure(image="", text=f"Could not load image:\n{e}")
+            return
 
         if self.mode == "os":
             # Grayscale heightmap mode
