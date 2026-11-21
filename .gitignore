@@ -6,12 +6,18 @@ __pycache__/
 # Jupyter
 .ipynb_checkpoints/
 
-# Generated mesh and print files
+# Generated mesh and print files (prevents repo bloat)
 output/
+TAMP_output/
+test_generation_out/
 *.stl
-*.gcode
+*.STL
 *.3mf
+*.3MF
 *.glb
+*.GLB
+*.gcode
+*.GCODE
 
 # MPI-IS — internal lab data. Everything in here stays local, never goes to GitHub.
 MPI-IS/

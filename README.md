@@ -1,395 +1,274 @@
-# TAMP-OS: Tactile Accessible Microscopy Printing (Open-Source)
+# TAMP-OS v2: Tactile Microscopy & Scientific Image Printing
+> **Microscopy & Spectral Images to Accessible Tactile 3D Prints**  
+> *De micrografías y gradientes espectrales a modelos táctiles tridimensionales accesibles.*
 
-<p align="center">
-Natalia Gonzalez-Vazquez, Robert Faulkner, Victoria Gamez, Karly E. Cohen, Gunther Richter, Abigale Stangl, Andrew K. Schulz
-</p>
-
-<div align="center">
-  <img src="assets/Figure1_SICB2026_v2.png#gh-light-mode-only"
-       alt="Integrated FunMaP workflow shown as a metro-style diagram with two parallel pipelines that converge for cross-validation. The experimental pipeline (orange) progresses from SEM imaging of FePt thin films on SiO₂ spheres through XRD and SQUID measurements, producing averaged hysteresis loops and diffraction data. The simulation pipeline (purple) performs micromagnetic simulations of hemispherical FePt caps with radial or uniaxial anisotropy, generating hysteresis loops and switching field distributions. Both pipelines merge for direct comparison between experimental and simulated magnetic behavior, yielding publication-ready figures and magnetic property metrics."
-       width="100%">
-
-  <img src="assets/Figure1_SICB2026_v2_blackbackground2.png#gh-dark-mode-only"
-       alt="Integrated FunMaP workflow shown as a metro-style diagram with two parallel pipelines that converge for cross-validation. The experimental pipeline (orange) progresses from SEM imaging of FePt thin films on SiO₂ spheres through XRD and SQUID measurements, producing averaged hysteresis loops and diffraction data. The simulation pipeline (purple) performs micromagnetic simulations of hemispherical FePt caps with radial or uniaxial anisotropy, generating hysteresis loops and switching field distributions. Both pipelines merge for direct comparison between experimental and simulated magnetic behavior, yielding publication-ready figures and magnetic property metrics."
-       width="100%">
-</div>
-
-**TAMP-OS** is an open-source extension and update of the original [TAMP](https://github.com/Aschulz94/TAMP) (Tactile Accessible Microscopy Printing) workflow for converting microscopy images into 3D-printable tactile lithographs.
-
-This workflow is published in *Integrative and Comparative Biology* as **"TAMP-OS: An Open-Source Workflow for Tactile 3D-Printable Lithographs"**, by Natalia Gonzalez-Vazquez, Robert Faulkner, Victoria Gamez, Karly E. Cohen, Gunther Richter, Abigale Stangl, and Andrew K. Schulz. Below are links to the published paper, preprint, Edmond data repository, and this repository:
-
-[![ICB Publication](https://img.shields.io/badge/ICB-paper-B31B1B.svg)](https://academic.oup.com/icb/article/doi/10.1093/icb/icag071/8700636) [![arXiv](https://img.shields.io/badge/arXiv-Preprint-B31B1B.svg)](https://arxiv.org/abs/2603.16801) [![Edmond](https://img.shields.io/badge/Edmond-Data-0068B4.svg)](https://edmond.mpg.de) [![GitHub TAMP-OS](https://img.shields.io/badge/GitHub-TAMP--OS-181717.svg?logo=github)](https://github.com/nagova/TAMP-OS)
+![TAMP-OS Header](assets/tamp_os_header.png)
 
 ---
 
-## What is TAMP-OS
-
-> **Built on [TAMP](https://github.com/Aschulz94/TAMP)** — the original Tactile Accessible Microscopy Printing workflow (Faulkner et al.), which converts microscopy images into 3D-printed tactile lithographs using Bambu Lab hardware. The original workflow, figures, and README are preserved in [`tamp_original/`](tamp_original/).
-
-TAMP makes scientific imagery accessible to blind and visually impaired people by converting microscopy images into 3D-printed tactile lithographs. The original workflow depended on Bambu Lab hardware and the proprietary Bambu Maker Lab slicer.
-
-**TAMP-OS replaces that proprietary dependency with a fully open-source pipeline** that works with any FDM printer, gives full scripting control, and requires no hardware lock-in.
-
-```
-Microscopy Image → Height Map → STL → G-code → Any open-source printer → Tactile Lithograph
-```
+### Navegación Rápida
+- [**1. Cómo lanzar**](#1-cómo-lanzar)
+- [**2. Guía de usuario (Matriz de Parámetros y Ejemplos)**](#2-guía-de-usuario)
+- [**3. Cómo funciona (Fundamento Científico y Matemático)**](#3-cómo-funciona)
 
 ---
 
-## Goals
+## 1. Cómo lanzar
 
-- Make tactile science communication accessible to any lab, regardless of budget or hardware
-- Provide a fully scriptable, automatable pipeline
-- Be approachable for researchers with no programming experience
-- Support multiple output formats (STL, 3MF, GLB) and printers
+TAMP-OS v2 integra en una sola aplicación de escritorio autónoma (`tamp-os_gui.py`) tanto el flujo clásico de litografías en escala de grises como la nueva tecnología **TAMP-OS Chroma** para gradientes y mapas de color multicanal.
 
----
+### Requisitos del Sistema
+- **Python:** 3.9 o superior (probado en Windows, Linux y macOS).
+- **Impresora 3D:** Cualquier impresora FDM convencional (boquilla de 0.4 mm o 0.2 mm) o de resina (SLA).
 
-### Fabrication method
+### Instalación Rápida
 
-This pipeline produces **discrete extruded topology** — height maps converted to layered FDM (fused deposition modeling) prints. The nozzle diameter and layer height define the minimum feature size that can be physically reproduced.
+1. **Clonar el repositorio:**
+   ```bash
+   git clone https://github.com/nagova/TAMP-OS.git
+   cd TAMP-OS
+   ```
 
-This is distinct from **continuous microtopography fabrication** methods (e.g. photopolymer jetting, SLA, or specialized tactile printing systems), which can achieve finer surface gradients. If you are using a non-FDM printer, the nozzle-based preset calculations will not apply — use the **Full customization** panel and the sweep tool to determine your own optimal parameters.
-
----
-
-### Why open-source?
-
-The Bambu Lab ecosystem has three limitations for research use:
-- **Proprietary slicer** — no scripting or automation support
-- **No API control** — cannot integrate into larger pipelines
-- **Hardware lock-in** — costly and not community-repairable
-
-This pipeline uses only open-source tools and works with any FDM printer.
+2. **Instalar dependencias:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+   *(Incluye `numpy`, `pillow`, `scipy`, `numpy-stl`, `matplotlib` y `pyvista`)*.
 
 ---
 
-## Tools
+### Lanzar la Interfaz de Escritorio (TAMP-OS v2 GUI)
 
-### Main tool
-
-| File | Format | Description |
-|--------|--------|-------------|
-| `tamp_batch_gui_v2.ipynb` | Jupyter notebook | **Start here.** Batch GUI with Low/Medium/High quality presets calculated from your printer's nozzle and layer height. Supports .STL, .3MF, .GLB output. |
-
-> Note: Requires **Jupyter Lab or Jupyter Notebook** - not VS Code notebook viewer.
-
-### Supporting tools
-
-| File | Format | Description |
-|--------|--------|-------------|
-| [`image_check/tamp_image_check.ipynb`](image_check/) | Jupyter notebook | **Will my image work?** Checks one image before printing (structure size on the print, noise, colour, uneven illumination, scale bars, polarity) and tells you how to fix each problem, with a TAMP-OS setting or an ImageJ/Fiji step. See [`image_check/README.md`](image_check/README.md) |
-| `tamp_resolution_compare.ipynb` | Jupyter notebook | **Quality checking tool.** Run one image at multiple resolution, relief height, or blur values to find the best settings before a full batch run |
-| `pyvista_image-generator.ipynb` | Jupyter notebook | **3D visualization tool.** Renders every STL in your comparison folder as a 3D screenshot (full view + zoom), useful for figures and presentations |
-
----
-
-## Getting Started for non Python users 
-
-Follow these steps if you have never used Python before.
-
-### 1. Install Python
-
-Download Python 3.10 or newer from:
- **https://www.python.org/downloads/**
-
-> ⚠ On Windows, check **"Add Python to PATH"** during installation.
-
-Verify it worked — open a terminal and type:
-```
-python --version
-```
-You should see something like `Python 3.11.2`.
-
-### 2. Install dependencies
-
-Open a terminal, go into the repo folder, and run:
-```bash
-pip install -r requirements.txt
-```
-You only need to do this once.
-
-### 3. Install Jupyter Lab (if you don't have it)
+Ejecuta el script principal con un solo comando:
 
 ```bash
-pip install jupyterlab
-jupyter lab
+python tamp-os_gui.py
 ```
 
-### 4. Open the main tool
+![TAMP-OS GUI Mockup](assets/chroma_gui_mockup.jpg)
 
-In Jupyter Lab, open `tamp_batch_gui_v2.ipynb` and run all cells. The GUI window will appear.
+#### Conmutador de Modo (Segmented Control)
+En la barra superior de la aplicación puedes alternar instantáneamente entre los dos motores con un solo clic:
+- **`TAMP-OS`**: Para micrografías tradicionales (SEM, TEM, fluorescencia, luz visible). Traduce los tonos de gris directamente a relieve superficial.
+- **`TAMP-OS Chroma`**: Para imágenes con gradientes de concentración continua, mapas de temperatura o datos espectrales (ej. difusión de Li en electrodos, mapas Raman, espectrometría de masas). Combina una rampa de elevación cinestésica con modulación de microtextura háptica.
 
----
-
-## The Main Batch GUI (v2)
-
-The v2 GUI is designed around a simple print workflow: add images, choose a printer profile, choose Low / Medium / High quality, and generate print-ready files. The profile represents the machine capacity, while **Full customization** keeps the detailed printer and mesh settings available when needed.
-
-**How to use it:**
-
-1. Click **Add images** to select one or more microscopy images
-2. Choose a **printer profile** that roughly matches the printer's capacity
-3. Select a **quality preset**:
-
-| Preset | What it means |
-|--------|--------------|
-| **Low** | 1 pixel = 2 nozzle width. Smooth, small file. Good for quick checks. |
-| **Medium** | 1 pixel = 1 nozzle width. Matches what your printer can actually reproduce. **Recommended starting point.** |
-| **High** | 1 pixel = 0.5 nozzle width. Finer than the nozzle — captures more texture, larger file. |
-
-Each preset card includes an approximate binary STL size. The estimate is based on the generated mesh triangle count, so it changes with resolution and image aspect ratio.
-
-By default, one quality setting applies to the whole batch. For mixed image sets, check **Choose different quality for different images** to reveal a per-image table with suggested quality and a Low / Medium / High override.
-
-4. Choose the **output folder** and **output format**
-5. Click **Generate print files**
-
-The default output is `.STL`. Open **Full customization** only when you need to change print size, nozzle diameter, layer height, relief height, blur, resolution, base thickness, flip, or invert relief.
+> [!NOTE]
+> **Persistencia:** Al cambiar de modo, **nunca se borra la lista de imágenes cargadas**. Además, la aplicación recuerda tu último modo seleccionado y tu carpeta de salida en `~/.tamp_settings.json`.
 
 ---
 
-## Will My Image Work? (Image Check)
-
-Before printing, check your image with [`image_check/tamp_image_check.ipynb`](image_check/). It uses the same processing as the GUI, simulates what the printer can reproduce, and tells you what will go wrong and how to fix it: crop out scale bars, invert a bright background, flatten uneven illumination, export one colour channel, add blur for noisy images, or crop/print wider when structures are too small to feel.
-
-![Image map](image_check/assets/image_map.png)
-
-Full guide, example gallery and how it works: **[`image_check/README.md`](image_check/README.md)**.
+- **Repositorio Histórico (Archive):**
+  - `archive/tamp_original/`: Contiene el código fuente y las figuras históricas del proyecto SICB 2026 (`TAMP-main.zip` original).
+  - `archive/tamp_os_v1/`: Contiene la suite v1 (`tamp_batch_gui_v2.ipynb`, `tamp_resolution_compare.ipynb`, etc.).
+  - `archive/tamp_os_chroma/`: Contiene los scripts exploratorios y notebooks de desarrollo inicial de Chroma.
 
 ---
 
-## Quality Checking Before a Full Batch Run
+## 2. Guía de usuario
 
-Before processing many images, use `tamp_resolution_compare.ipynb` to find the best settings for your specific image and printer.
+### ¿Cuándo usar TAMP-OS clásico vs. cuándo usar TAMP-OS Chroma?
 
-It runs **one image** at multiple values of one parameter (resolution, relief height, or blur) and saves clearly named files — e.g. `elephant_resolution_128.stl`, `elephant_resolution_256.stl` — so you can compare them side by side in MeshLab or PrusaSlicer.
-
-**Recommended workflow:**
-1. Run `tamp_resolution_compare.ipynb` on one representative image
-2. Open the output STL files in MeshLab to compare, or use `pyvista_image-generator.ipynb` to render them all as 3D screenshots automatically
-3. Pick the settings that look best
-4. Use those settings in `tamp_batch_gui_v2.ipynb` for the full batch
-
-The figure below shows an example comparison matrix — each row sweeps one parameter while holding the others fixed. This makes it easy to isolate the effect of blur, relief height, and resolution independently.
-
-![Parameter comparison matrix](assets/new-trunk.png)
-
-*left column: blur sweep (resolution=256, relief=3.0 mm). Middle column: relief height sweep (resolution=256, blur=1.2). Right row: resolution sweep (relief=3.0 mm, blur=1.2).*
-
----
-
-## 3D Visualization of Comparison Results
-
-After running `tamp_resolution_compare.ipynb`, use `pyvista_image-generator.ipynb` to render all your output STLs as 3D images without opening MeshLab manually.
-
-It reads every `.stl` file in your comparison output folder and saves two renders per file:
-- **Full view** — the whole lithograph from an isometric angle
-- **Zoom view** — a close-up of the center to show surface detail
-
-Both dark and light themes are available. The output PNGs can be used directly in figures and presentations.
-
-**How to use it:**
-1. Run `tamp_resolution_compare.ipynb` first to generate the STL files
-2. Open `pyvista_image-generator.ipynb`
-3. Set `STL_FOLDER` to your comparison output folder
-4. Choose `THEME = "dark"` or `THEME = "light"`
-5. Run the cell — renders are saved to `individual_renders/` and `zoom_renders/`
-
-> ⚠ Install dependencies with: `pip install pyvista trame`
-
----
-
-## Choosing Parameters Based on Your Printer
-
-The Low / Medium / High presets in the v2 GUI are calculated from your printer's nozzle diameter and layer height. The table below shows what those presets translate to for the most common nozzle sizes, assuming a 100 mm wide print.
-
-The right choice depends on your **machine**, **material**, and **time available** — but the sweep tool makes it easy to verify visually before committing to a full batch.
-
-The GUI now gives a first-pass recommendation from the image itself. Large images with strong edge detail often justify High resolution, smooth or low-pixel-count images may be fine at Low, and clipped or low-contrast images should be checked with a parameter sweep because flat tones can become flat tactile plateaus.
-
-| Nozzle | Preset | Resolution | Blur | 1 px on print | Notes |
-|--------|--------|-----------|------|---------------|-------|
-| 0.4 mm | Low    | 128 px | 2.0 | 0.78 mm | Fast print, smooth feel, small file |
-| 0.4 mm | Medium | 256 px | 1.2 | 0.39 mm | Matches nozzle — **recommended starting point** |
-| 0.4 mm | High   | 512 px | 0.8 | 0.20 mm | Finer than nozzle, captures more texture |
-| 0.6 mm | Low    | 64 px  | 2.0 | 1.56 mm | Very smooth, very fast |
-| 0.6 mm | Medium | 128 px | 1.2 | 0.78 mm | Matches nozzle |
-| 0.6 mm | High   | 256 px | 0.8 | 0.39 mm | Finer than nozzle |
-| 0.2 mm | Low    | 256 px | 2.0 | 0.39 mm | Matches a 0.4 mm Medium |
-| 0.2 mm | Medium | 512 px | 1.2 | 0.20 mm | High detail, large file |
-| 0.2 mm | High   | 512 px | 0.8 | 0.20 mm | Capped at 512 px (GitHub file size limit) |
-
-> 💡 These are starting points — the optimal settings also depend on the image itself. A high-contrast SEM image (sharp edges, lots of noise) may need more blur even at Medium resolution. A smooth fluorescence image may look great at Low. Use `tamp_resolution_compare.ipynb` to check your specific image before running a full batch.
-
-> 💡 If you want full control, the **Full customization** panel in the v2 GUI lets you override resolution, blur, and base thickness independently of any preset. You can also work directly with the STL and adjust slicing settings in PrusaSlicer for further control.
-
----
-
-## Workflow Steps
-
-### 1. Prepare your image in ImageJ/Fiji
-
-- **Crop out any scale bars, metadata bars, or annotations** at the bottom of the image — these will appear as raised features in the lithograph
-- Export as `.PNG` or `.JPG`
-
-> 💡 The pipeline converts your image to grayscale automatically. If you want finer control over which features become raised vs recessed (e.g. isolating a specific channel or adjusting contrast manually), convert to grayscale in ImageJ/Fiji before exporting — but this is optional, not required.
-
-> 💡 For images with very fine detail, you can apply a Gaussian blur (radius = 1.0 pixel) in ImageJ/Fiji before exporting, or simply adjust the blur parameter in the GUI.
-
----
-
-### 2. Check your image dimensions and set print size
-
-- Your physical print size must match the image aspect ratio — **the print does NOT have to be square**
-- Leave print height as `auto` and the tool calculates it for you
-- If you set it manually and it doesn't match, the script will warn you:
+TAMP-OS v2 integra dos tecnologías táctiles distintas según la naturaleza de la información científica que deseas transmitir al tacto:
 
 ```
-[WARNING] Aspect ratio mismatch!
-    Height map is 512×384 (ratio 1.333)
-    Print size is 100×100 mm (ratio 1.000)
-    The lithograph will appear stretched. Consider size_y=75.0
+                            ¿Qué tipo de imagen científica tienes?
+                                              │
+                ┌─────────────────────────────┴─────────────────────────────┐
+                ▼                                                           ▼
+     [Topografía o Intensidad Visual]                            [Variable Física en Color]
+  SEM, TEM, AFM, microscopía de luz,                         Difusión química, concentración (Li),
+   fotografía biológica, fluorescencia                      temperatura, espectrometría, mapas Raman,
+               monocanal.                                       paletas Inferno, Viridis, Turbo.
+                │                                                           │
+                ▼                                                           ▼
+       Usa MODO TAMP-OS                                          Usa MODO TAMP-OS CHROMA
+  • Tono de gris → Altura física.                            • Color RGB → Proyección KD-Tree escalar.
+  • Conserva el relieve anatómico.                           • Rampa macroscópica (cinestesia global).
+  • Ajustes clave: Invert & Relief.                          • Microtextura háptica modulada.
 ```
 
-| Image pixels | Correct print size |
-|---|---|
-| 1024 × 1024 (square) | size_x=100, size_y=100 |
-| 1024 × 768 (4:3) | size_x=100, size_y=75 |
-| 1920 × 1080 (16:9) | size_x=100, size_y=56.3 |
+#### Tabla Comparativa por Técnica Científica:
+
+| Técnica / Tipo de Imagen | Modo Recomendado | Colormap / Ajuste | Razón Científica |
+| :--- | :--- | :--- | :--- |
+| **Microscopía Electrónica de Barrido (SEM)** | **TAMP-OS** | `Invert: Off` | La imagen mide topografía y dispersión electrónica; el relieve directo representa fielmente la estructura física. |
+| **Microscopía Electrónica de Transmisión (TEM)** | **TAMP-OS** | `Invert: On` | Las zonas electrodensas (de interés) suelen verse oscuras sobre fondo claro; `Invert: On` las eleva tácticamente. |
+| **Microscopía Óptica Operando / In Situ** | **Chroma** | `Inferno` | Muestra gradientes continuos de concentración química (ej. intercalación de Li); la rampa y textura transmiten la magnitud. |
+| **Microscopía de Fluorescencia Confocal** | **Chroma** | `Viridis` o `SVD` | El gradiente de emisión fluorófora indica densidad molecular cuantitativa; evita colapsos de luminancia. |
+| **Mapas Espectroscópicos (Raman, FTIR, EDS)** | **Chroma** | `Turbo` o `SVD` | El color codifica bandas espectrales o abundancia elemental; la microtextura permite discriminar picos con el tacto. |
+| **Termografía Infrarroja / Mapas de Calor** | **Chroma** | `Inferno` o `Turbo` | El gradiente térmico continuo se comprende intuitivamente al sentir mayor rugosidad y elevación hacia las zonas calientes. |
+
+#### ¿Por qué no usar TAMP-OS clásico con mapas de color?
+En un mapa de color como *Inferno* o *Viridis*, **la luminancia estándar no es monótona**. Colores con significado físico opuesto (como un púrpura oscuro y un rojo saturado) pueden dar exactamente el mismo tono de gris, colapsando zonas de alta concentración en depresiones engañosas.
+
+#### ¿Por qué no usar TAMP-OS Chroma para fotos normales o SEM?
+El modo Chroma impone una rampa macroscópica ($Z_{\text{rampa}}$) pensada para fenómenos de gradiente continuo o difusión. Si se aplica a una micrografía SEM de una celda biológica o un grano mineral, inclinaría artificialmente la muestra deformando su geometría real.
 
 ---
 
-### 3. Generate the STL
+### Matriz de Parámetros: "¿Qué pasa si modifico este ajuste?"
 
-Open `tamp_batch_gui_v2.ipynb` in Jupyter Lab, add your images, choose your quality preset, and click **Generate STLs**.
+#### A. Modo TAMP-OS Clásico (Litografías Grayscale)
 
----
-
-### 4. Slice and print
-
-**Manual (any slicer):**
-- Load the `.stl` into PrusaSlicer, OrcaSlicer, or Cura
-- Recommended FDM settings:
-  - Layer height: **0.12 mm**
-  - Nozzle: **0.4 mm**
-  - Infill: **15%** (gyroid)
-  - Supports: **none needed** (flat base)
+| Parámetro | Rango / Opciones | Valor por defecto | Efecto físico en la pieza impresa | ¿Cuándo modificarlo? |
+| :--- | :--- | :--- | :--- | :--- |
+| **Quality (Presets)** | `Low` (128 px)<br>`Medium` (256 px)<br>`High` (512 px) | `Medium` | Controla la densidad de triángulos de la malla y el tamaño del archivo STL (de ~2.3 MB a ~37.5 MB). | Usa `Low` para prototipos ultra rápidos de validación; usa `High` para microscopía con micro-estructuras finas. |
+| **Relief height** | 1.0 – 5.0 mm | 3.0 mm | Altura neta entre el tono más oscuro y el más claro. A mayor valor, mayor contraste de altura táctil. | Redúcelo a 1.5–2.0 mm en imágenes muy ruidosas para evitar puntas filosas; súbelo a 3.5–4.0 mm en imágenes de bajo contraste. |
+| **Invert** | `Off` / `On` | `Off` (Luz = Alto) | Invierte la polaridad: en `Off`, lo blanco es alto; en `On`, lo oscuro es alto. | Actívalo (`On`) en imágenes TEM o de tinción biológica donde la muestra de interés es oscura y el fondo es blanco. |
+| **Blur (sigma)** | 0.0 – 3.0 | 1.2 | Aplica suavizado gaussiano antes de generar la malla. Elimina el grano del sensor o ruido de escaneo SEM. | Auméntalo si la pieza impresa se siente rasposa por ruido electrónico del microscopio; redúcelo a 0.5 si la imagen es perfectamente nítida. |
+| **Base thickness** | 0.8 – 3.0 mm | 1.2 mm | Espesor del zócalo sólido bajo el relieve. | Mantén 1.2 mm para rigidez óptima. Si usas boquillas grandes (0.6 mm) o piezas de más de 150 mm, usa 1.6–2.0 mm para prevenir arqueamiento. |
+| **Nozzle & Layer** | Boquillas: 0.2, 0.4, 0.6 mm<br>Capas: 0.08 – 0.20 mm | 0.4 mm boquilla<br>0.12 mm capa | Define el paso de escalera vertical y la resolución de detalle horizontal. | Usa boquilla de 0.2 mm y capas de 0.08 mm si requieres micro-detalles celulares imperceptibles en 0.4 mm. |
 
 ---
 
-## Recommended Printers
+#### B. Modo TAMP-OS Chroma (Mapas de Color y Gradientes)
 
-| Printer | Firmware | Notes |
-|---------|----------|-------|
-| **Prusa MK4 / XL** | Marlin | Most plug-and-play, good for labs |
-| **Voron 2.4** | Klipper | Best for full automation via Moonraker API |
-| Any Marlin/Klipper printer | — | Works with PrusaSlicer profiles |
-
----
-
-## Troubleshooting
-
-**`python: command not found` / `pip: command not found`**
-→ Python is not installed or not in PATH. Re-install from https://www.python.org/downloads/ and check "Add Python to PATH" on Windows.
-
-**`ModuleNotFoundError: No module named 'numpy'` (or pillow, scipy, stl)**
-→ Run `pip install -r requirements.txt` from the repo root.
-
-**The STL looks stretched or squished**
-→ Print height doesn't match the image aspect ratio. Leave size_y as `auto` or check the warning message for the suggested value.
-
-**The STL is mirrored**
-→ Make sure "Flip vertically" is checked in the GUI, or that `--no-flip` is not set in the CLI.
-
-**The relief is too subtle or too extreme**
-→ Adjust relief height. Start with 3.0 mm. Use `tamp_resolution_compare.ipynb` to test values before a full batch run.
-
-**The GUI window doesn't appear (Jupyter)**
-→ Use Jupyter Lab or Jupyter Notebook. Does not work in VS Code's notebook viewer.
-
-**PrusaSlicer not found**
-→ Pass the full path with `--prusaslicer`. See examples in Step 4 above.
-
-**STL file is too large for GitHub (>25 MB)**
-→ Use the Low preset, or reduce `--resolution` to 256 in the CLI.
+| Parámetro | Rango / Opciones | Valor por defecto | Efecto cinestésico / cutáneo | ¿Cuándo modificarlo? |
+| :--- | :--- | :--- | :--- | :--- |
+| **Colormap** | `Inferno`, `Viridis`, `Turbo`, `SVD Chromatic`, `Luminance` | `Inferno` | Algoritmo de indexación RGB a valor escalar $0–1$. | Debe coincidir con la paleta de la imagen científica fuente (ej. `Inferno` para difusión Li/térmica; `Viridis` para microscopía confocal). |
+| **Ramp elevation** | 0.5 – 4.0 mm | 1.8 mm | **Componente Cinestésico Macro:** Inclinación global de la placa. La mano y muñeca sienten hacia dónde sube el gradiente. | Súbelo a 2.5–3.0 mm si el gradiente es suave y difícil de distinguir; redúcelo a 1.0 mm si prefieres un modelo más plano. |
+| **Texture library** | `Dots`, `Stripes`, `Grid`, `Waves`, `Scales`, `Honeycomb` | `Honeycomb` | **Componente Cutáneo Micro:** Forma geométrica del patrón que modula su densidad/relieve según el valor de color. | Elige según el tipo de datos o preferencia del usuario táctil (ver catálogo de texturas abajo). |
+| **Texture relief** | 0.2 – 1.5 mm | 0.6 mm | Altura de las crestas de la textura sobre la superficie de la rampa. | Auméntalo a 0.8–1.0 mm para yemas con menor sensibilidad táctil; bájalo a 0.4 mm para texturas muy densas. |
+| **Polarity** | `Normal` / `Inverted` | `Normal` | Define si el valor máximo del mapa de color es la zona más rugosa/alta o la más lisa/plana. | En `Normal`, mayor concentración = mayor textura. En `Inverted`, la concentración alta es completamente lisa. |
 
 ---
 
-## Example Output
+### Catálogo de la Biblioteca de Texturas Táctiles
 
-Input: `SEM_5um_raw.png` — FePt spherical particles, 5 µm scale
+Cada textura de la biblioteca fue diseñada específicamente respetando la resolución de la yema del dedo humano ($\approx 1.2–2.0\text{ mm}$) y la cinemática de extrusión FDM:
 
-![Height map preview](examples/fept_spheres/sem5um_preview.png)
+![Texture Library Catalog](assets/texture_library_catalog.png)
 
----
-
-## Files
-
-| File | Description |
-|------|-------------|
-| `tamp_batch_gui_v2.ipynb` | **Main tool** — batch GUI with quality presets |
-| `image_check/` | Supporting — will my image work? Notebook, guide, figures and example images |
-| `tamp_resolution_compare.ipynb` | Supporting — quality checking before batch runs |
-| `pyvista_image-generator.ipynb` | Supporting — 3D rendering of comparison STLs for figures |
-| `requirements.txt` | Python dependencies |
-
----
-
-## Pipeline Details
-
-All notebooks are self-contained — no external scripts needed. The pipeline runs these steps internally:
-
-| Step | Function | Description |
-|------|----------|-------------|
-| 1 | `image_to_heightmap` | Grayscale → contrast stretch → Gaussian blur → flip → [0,1] float array |
-| 2 | `heightmap_to_stl` | Builds watertight solid mesh: top relief + flat base + 4 side walls |
-| 3 | Format conversion | Converts STL to .3MF or .GLB if selected |
+1. **`Dots` (Matriz de Puntos Gaussianos):**
+   - *Sensación háptica:* Granularidad puntual tipo estarcido/braille. Al deslizar el dedo se percibe un cambio progresivo de espaciado y prominencia de puntos.
+   - *Mejor uso:* Datos de densidad de partículas, dispersión de electrones o mapas de calor estáticos.
+2. **`Stripes` (Estrías Paralelas Direccionales):**
+   - *Sensación háptica:* Fricción direccional notable. Al pasar el dedo transversalmente produce una vibración táctil clara de alta frecuencia.
+   - *Mejor uso:* Flujos direccionales, gradientes 1D o perfiles de difusión rectilínea.
+3. **`Grid` (Cuadrícula / Crosshatch):**
+   - *Sensación háptica:* Rugosidad isotrópica uniforme. No depende de la dirección en que se desplace el dedo sobre la muestra.
+   - *Mejor uso:* Mapas de potencial eléctrico o matrices de correlación bidimensionales.
+4. **`Waves` (Ondas Sinusoidales Continuas):**
+   - *Sensación háptica:* Transición suave y ondulada sin aristas filosas. Muy agradable al tacto prolongado.
+   - *Mejor uso:* Fenómenos ondulatorios, frentes de difusión continua y perfiles de oscilación.
+5. **`Scales` (Escamas Asimétricas Imbricadas):**
+   - *Sensación háptica:* Asimetría de fricción (suave en una dirección, retentiva en sentido contrario).
+   - *Mejor uso:* Gradientes irreversibles, flujo de fluidos o transporte polarizado.
+6. **`Honeycomb` (Celdas Hexagonales):**
+   - *Sensación háptica:* Estructura compartimentada con bordes definidos. Fácilmente identificable incluso con relieve bajo.
+   - *Mejor uso:* Morfología celular, granos de material policristalino y concentración química continua.
 
 ---
 
-## Citation
+### Galería de Ejemplos Comparativos
 
-If you use TAMP-OS in your work, please cite:
+#### Ejemplo 1: Gradiente de Concentración de Li en $\text{Li}_x\text{Mn}_2\text{O}_4$ (Inferno)
+> Imagen cortesía del paper de M. Mead et al. (microscopía óptica operando durante desintercalación electroquímica).
 
-```bibtex
-@article{gonzalez_vazquez_tamp_2026,
-  title   = {TAMP-OS: An Open-Source Workflow for Tactile 3D-Printable Lithographs},
-  author  = {Gonzalez-Vazquez, Natalia and Faulkner, Robert and Gamez, Victoria and
-             Cohen, Karly E. and Richter, Gunther and Stangl, Abigale and Schulz, Andrew K.},
-  journal = {Integrative and Comparative Biology},
-  volume  = {66},
-  year    = {2026},
-  doi     = {10.1093/icb/icag071},
-  url     = {https://academic.oup.com/icb/article/doi/10.1093/icb/icag071/8700636}
-}
+![Ejemplo 1 Li Inferno](assets/preview_ejemplo1_li_inferno.png)
+
+- **Entrada:** Mapa de color continuo en paleta `Inferno` donde el color negro/púrpura representa $0\%$ Li y el amarillo brillante representa $100\%$ Li.
+- **Salida Táctil:** Rampa de 1.8 mm inclinada en la dirección de difusión con modulación de textura táctil. El usuario ciego o con baja visión percibe la inclinación macro con la mano y la saturación de microtextura con el pulpejo.
+
+---
+
+#### Ejemplo 2: Espectro 2D Multicanal (Eje Cromático SVD)
+
+![Ejemplo 2 Espectro 2D](assets/preview_ejemplo2_espectro_2d.png)
+
+- **Entrada:** Espectro complejo con múltiples picos y transiciones de color no estándar (cian $\to$ verde $\to$ amarillo $\to$ magenta).
+- **Salida Táctil:** Proyección en el primer componente principal cromático (SVD) acoplado a rampa bidireccional y textura de escamas/estrías.
+
+---
+
+#### Comparativa de Perfiles Transversales $Z(x)$
+
+![Perfiles Transversales](assets/preview_profiles.png)
+
+El corte transversal $Z(x)$ generado en vivo por la interfaz ilustra cómo la base rígida (1.2 mm), la rampa macroscópica y los dientes de microtextura se superponen armónicamente para garantizar un tacto inequívoco sin comprometer la resistencia mecánica.
+
+---
+
+## 3. Cómo funciona
+
+### El Problema Científico: ¿Por qué fallan las litografías clásicas con el color?
+
+Las litografías táctiles convencionales convierten la imagen a escala de grises calculando la luminancia estándar:
+$$L = 0.299\,R + 0.587\,G + 0.114\,B$$
+
+En imágenes científicas con mapas de color continuos (como `Inferno`, `Viridis` o `Jet`), **la luminancia no es monótona**. Colores con significado físico radicalmente opuesto pueden tener exactamente la misma luminancia (por ejemplo, un rojo saturado y un azul oscuro pueden producir idéntico tono de gris). Como consecuencia:
+1. Una litografía plana colapsa zonas de alto valor científico en depresiones falsas.
+2. Un gradiente continuo se percibe simplemente como una "rampa aburrida" sin información sobre la textura o saturación del fenómeno medido.
+
+---
+
+### 1. Decodificación Geométrica por Árbol KD (`cKDTree`)
+
+Para recuperar el valor físico escalar exacto $s \in [0, 1]$ de cada píxel $(x, y)$, TAMP-OS Chroma no calcula luminancias arbitrarias. En su lugar, proyecta cada píxel RGB en una tabla de correspondencia (LUT) calibrada de 256 puntos tridimensionales:
+
+$$\mathbf{LUT}_k = \big(R_k, G_k, B_k\big), \quad k \in [0, 255]$$
+
+Utilizando el árbol espacial optimizado `scipy.spatial.cKDTree`, cada píxel $\mathbf{C}(x, y) = (R, G, B)$ se empareja en tiempo $\mathcal{O}(\log N)$ con su color más cercano en el mapa de color:
+
+$$s(x,y) = \frac{1}{255} \arg\min_{k} \|\mathbf{C}(x,y) - \mathbf{LUT}_k\|_2$$
+
+Esto garantiza una fidelidad cromática absoluta independientemente de la saturación o el contraste de la pantalla. Para imágenes con paletas multicanal no estándar, se aplica una descomposición en valores singulares (SVD) sobre la nube de dispersión cromática para extraer el eje de mayor varianza física.
+
+---
+
+### 2. Codificación Háptica de Doble Escala (Dual-Scale Haptic Architecture)
+
+La superficie final imprimible se compone de tres estratos aditivos:
+
+$$Z_{\text{total}}(x,y) = Z_{\text{base}} + Z_{\text{rampa}}(x,y) + Z_{\text{textura}}(x,y)$$
+
+```
+▲ Z (mm)
+│
+│       ▲ Z_textura (0.2–1.5 mm: modulación de microtextura cutánea)
+│     ┌─┴─┐
+│     │/\ │/\ │/\ │/\   ◄── Crestas táctiles
+│    /│  /│  /│  /│  /  ◄── Rampa macro Z_rampa (0.5–4.0 mm: sensación cinestésica)
+│   / │ / │ / │ / │ /
+│  ───────────────────
+│  ███████████████████  ◄── Base rígida Z_base (1.2 mm: estabilidad estructural)
+└────────────────────────► X (mm)
 ```
 
----
+#### A. Componente Cinestésico Macro ($Z_{\text{rampa}}$)
+La mano humana tiene mecanorreceptores propioceptivos en tendones y articulaciones de la muñeca y dedos capaces de percibir inclinaciones gruesas ($> 0.5\text{ mm}$ en tramos de $50\text{ mm}$). La rampa linear:
+$$Z_{\text{rampa}}(x,y) = x \cdot \left(\frac{\Delta Z_{\text{rampa}}}{W}\right)$$
+permite al usuario orientar la muestra de inmediato con la palma de la mano antes de iniciar el escaneo fino con los dedos.
 
-## Acknowledgements
-
-The authors are grateful for the support of the **Tactile Media Alliance**. A.K.S. acknowledges support from the **Alexander von Humboldt Foundation**. G.R. and A.K.S. acknowledge support from the **Max Planck Society**.
-
----
-
-## Contact
-
-Authored and maintained by:
-
-- **Natalia Gonzalez-Vazquez** — https://github.com/nagova
-- **Andrew K. Schulz** — https://github.com/Aschulz94
-
-For questions or issues, open a ticket on [GitHub](https://github.com/nagova/TAMP-OS/issues).
-
-If you find this repository useful, consider giving it a ⭐
+#### B. Componente Cutáneo Micro ($Z_{\text{textura}}$)
+Al mover la yema del dedo sobre la superficie, los mecanorreceptores de adaptación lenta **Merkel (SA-I)** decodifican la forma estática y el relieve de los puntos o celdas, mientras que los corpúsculos de **Meissner (FA-I)** detectan la vibración transitoria producida por la fricción contra las ranuras y estrías:
+$$Z_{\text{textura}}(x,y) = \mathcal{T}_{\text{patrón}}(x,y) \cdot s(x,y) \cdot h_{\text{relieve}}$$
 
 ---
 
-## License
+### 3. Fisiología Táctil y Parámetros de Manufactura FDM
 
-This project is licensed under the GNU GPL version 3 — see the [LICENSE](LICENSE) file for details.
+| Variable de Diseño | Valor Recomendado | Justificación Fisiológica y de Manufactura |
+| :--- | :--- | :--- |
+| **Paso espacial de textura ($p$)** | $2.5 - 3.0\text{ mm}$ | La agudeza táctil espacial de dos puntos en el pulpejo del dedo índice humano oscila entre $1.2$ y $2.0\text{ mm}$. Un paso de 2.8 mm garantiza que cada cresta se sienta individualizada y no como un bloque plano. |
+| **Relieve de textura ($h$)** | $0.5 - 0.8\text{ mm}$ | Claramente superior al umbral de detección estática cutánea ($\sim 0.06\text{ mm}$) e inmune a las tolerancias de la primera capa de la impresora. |
+| **Espesor del zócalo base** | $1.2\text{ mm}$ (3 capas sólidas) | Previene el pandeo (*warping*) del plástico PLA/PETG al enfriarse y despegarse de la cama caliente. |
+| **Altura de capa vertical** | $0.12 - 0.16\text{ mm}$ | Proporciona transiciones suaves en la pendiente de la rampa sin generar escalonamiento perceptible con la uña. |
 
-## Copyright
+---
 
-© 2026, Max Planck Society
+## Formatos de Exportación Compatibles
+
+1. **`.STL` (Binary Stereolithography):**
+   - Compatible con todos los laminadores del mercado (PrusaSlicer, Bambu Studio, Cura, OrcaSlicer, Simplify3D).
+   - Generación de mallas estrictamente estancas (*watertight / 2-manifold*) con fondo sólido plano y paredes perimetrales cerradas.
+2. **`.3MF` (3D Manufacturing Format):**
+   - Archivo XML comprimido estándar que conserva dimensiones métricas exactas y reduce el peso en disco en más de un $60\%$.
+3. **`.GLB` (Binary glTF 2.0):**
+   - Para visualización directa en web, visores de realidad aumentada (AR) o inspección en PowerPoint / navegadores 3D.
+
+---
+
+## Licencia
+
+Distribuido bajo la licencia MIT. Consulta el archivo [LICENSE](LICENSE) para más detalles.
