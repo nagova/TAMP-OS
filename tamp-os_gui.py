@@ -36,6 +36,7 @@ from matplotlib.colors import LightSource
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 import tkinter as tk
+import customtkinter as ctk
 from tkinter import ttk, filedialog, messagebox
 
 # Optional 3D viewer
@@ -622,24 +623,34 @@ def draw_texture_icon(canvas, texture_name, is_selected=False):
         canvas.create_polygon(hex_pts(30, 17, 7.5), outline=fg, fill="", width=1.6)
 
 
+
 # ==============================================================================
-# SECTION 6: USER INTERFACE (TAMP-OS v2 DESKTOP GUI)
+# SECTION 6: USER INTERFACE (TAMP-OS v2 MODERN DESKTOP GUI)
 # ==============================================================================
 
 class TAMPGUI:
-    def __init__(self, root):
-        self.root = root
+    def __init__(self, root=None):
+        if root is None:
+            ctk.set_appearance_mode("light")
+            ctk.set_default_color_theme("blue")
+            self.root = ctk.CTk()
+        else:
+            self.root = root
+
         self.root.title("TAMP-OS Lithograph Maker v2")
-        self.root.geometry("1160x860")
-        self.root.minsize(980, 720)
-        self.root.configure(bg="#F1F5F9")
+        self.root.geometry("1180x880")
+        self.root.minsize(1020, 740)
+        self.root.configure(fg_color="#F8FAFC")
 
         self.cfg = load_settings()
         self.mode = self.cfg.get("mode", "os")  # "os" or "chroma"
 
-        self.images_data = []  # list of dicts: {"path", "width", "height", "quality", "invert", "analysis"}
+        self.images_data = []  # list of dicts: {"path", "name", "width", "height", "quality", "invert", "analysis"}
         self.selected_idx = 0
         self.is_generating = False
+        self.thumbnail_cache = {}
+        self.ctk_preview_img = None
+        self.suggested_overall_preset = "Medium"
 
         self._init_vars()
         self._build_layout()
@@ -666,11 +677,11 @@ class TAMPGUI:
         self.base_thickness_var = tk.StringVar(value=self.cfg.get("base_thickness", "1.2"))
         self.flip_var = tk.BooleanVar(value=self.cfg.get("flip", True))
 
-        # Chroma vars
+        # Chroma specific
         self.chroma_colormap_var = tk.StringVar(value=self.cfg.get("chroma_colormap", "Inferno"))
-        self.chroma_ramp_var = tk.DoubleVar(value=self.cfg.get("chroma_ramp_elevation", 1.8))
+        self.chroma_ramp_var = tk.DoubleVar(value=float(self.cfg.get("chroma_ramp_elevation", 1.8)))
         self.chroma_texture_var = tk.StringVar(value=self.cfg.get("chroma_texture", "Honeycomb"))
-        self.chroma_relief_var = tk.DoubleVar(value=self.cfg.get("chroma_texture_relief", 0.6))
+        self.chroma_relief_var = tk.DoubleVar(value=float(self.cfg.get("chroma_texture_relief", 0.6)))
         self.chroma_polarity_var = tk.BooleanVar(value=self.cfg.get("chroma_polarity_inverted", False))
 
         self.advanced_open = tk.BooleanVar(value=False)
@@ -678,108 +689,83 @@ class TAMPGUI:
 
     def _build_layout(self):
         # 1. Top Header Bar
-        header = tk.Frame(self.root, bg="#1E293B", height=64)
-        header.pack(side=tk.TOP, fill=tk.X)
+        header = ctk.CTkFrame(self.root, corner_radius=0, fg_color="#1E293B", height=62)
+        header.pack(side="top", fill="x")
         header.pack_propagate(False)
 
-        # Title and subtitle
-        title_box = tk.Frame(header, bg="#1E293B")
-        title_box.pack(side=tk.LEFT, padx=18, pady=8)
-        tk.Label(title_box, text="TAMP-OS Lithograph Maker", font=("Segoe UI", 15, "bold"),
-                 fg="#F8FAFC", bg="#1E293B").pack(anchor="w")
-        tk.Label(title_box, text="Microscopy images to tactile 3D prints", font=("Segoe UI", 8),
-                 fg="#94A3B8", bg="#1E293B").pack(anchor="w")
+        title_box = ctk.CTkFrame(header, fg_color="transparent")
+        title_box.pack(side="left", padx=20, pady=8)
+        ctk.CTkLabel(title_box, text="TAMP-OS Lithograph Maker", font=("Segoe UI", 16, "bold"),
+                     text_color="#F8FAFC").pack(anchor="w")
+        ctk.CTkLabel(title_box, text="Microscopy images to tactile 3D prints", font=("Segoe UI", 11),
+                     text_color="#94A3B8").pack(anchor="w")
 
-        # Right Header Items
-        header_right = tk.Frame(header, bg="#1E293B")
-        header_right.pack(side=tk.RIGHT, padx=18, pady=12)
+        header_right = ctk.CTkFrame(header, fg_color="transparent")
+        header_right.pack(side="right", padx=20, pady=12)
 
-        tk.Button(header_right, text="Help & guide", font=("Segoe UI", 9),
-                  bg="#334155", fg="#F8FAFC", activebackground="#475569",
-                  relief="flat", cursor="hand2", padx=10, command=self._show_help).pack(side=tk.RIGHT, padx=6)
+        ctk.CTkButton(header_right, text="Help & guide", font=("Segoe UI", 11, "bold"),
+                      fg_color="#334155", text_color="#F8FAFC", hover_color="#475569",
+                      corner_radius=8, width=100, height=32, command=self._show_help).pack(side="right", padx=6)
 
-        tk.Label(header_right, text="v2.1", font=("Segoe UI", 9, "bold"),
-                 fg="#38BDF8", bg="#1E293B").pack(side=tk.RIGHT, padx=8)
+        ctk.CTkLabel(header_right, text="v2.1", font=("Segoe UI", 11, "bold"),
+                     text_color="#38BDF8").pack(side="right", padx=10)
 
         # Segmented Mode Switch [ TAMP-OS | TAMP-OS Chroma ]
-        switch_frame = tk.Frame(header, bg="#0F172A", bd=1, relief="solid")
-        switch_frame.pack(side=tk.RIGHT, padx=20, pady=12)
-
-        self.btn_mode_os = tk.Button(switch_frame, text="TAMP-OS", font=("Segoe UI", 10, "bold"),
-                                     bd=0, padx=14, pady=4, cursor="hand2", command=lambda: self._set_mode("os"))
-        self.btn_mode_os.pack(side=tk.LEFT)
-
-        self.btn_mode_chroma = tk.Button(switch_frame, text="TAMP-OS Chroma", font=("Segoe UI", 10, "bold"),
-                                         bd=0, padx=14, pady=4, cursor="hand2", command=lambda: self._set_mode("chroma"))
-        self.btn_mode_chroma.pack(side=tk.LEFT)
+        self.mode_seg = ctk.CTkSegmentedButton(
+            header_right, values=["TAMP-OS", "TAMP-OS Chroma"],
+            font=("Segoe UI", 11, "bold"), corner_radius=8,
+            selected_color="#2563EB", selected_hover_color="#1D4ED8",
+            unselected_color="#0F172A", unselected_hover_color="#1E293B",
+            text_color="#FFFFFF", command=self._on_segmented_mode_changed
+        )
+        self.mode_seg.set("TAMP-OS" if self.mode == "os" else "TAMP-OS Chroma")
+        self.mode_seg.pack(side="right", padx=14)
 
         # 2. Main 2-Column Content Split
-        main_content = tk.Frame(self.root, bg="#F1F5F9")
-        main_content.pack(fill=tk.BOTH, expand=True, padx=14, pady=10)
+        main_content = ctk.CTkFrame(self.root, fg_color="transparent")
+        main_content.pack(fill="both", expand=True, padx=16, pady=(10, 6))
 
         # Left Column (Images & Live Preview)
-        self.left_col = tk.Frame(main_content, bg="#FFFFFF", relief="ridge", bd=1, width=540)
-        self.left_col.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 7))
+        self.left_col = ctk.CTkFrame(main_content, fg_color="transparent", width=560)
+        self.left_col.pack(side="left", fill="both", expand=True, padx=(0, 8))
 
-        # Right Column (Settings & Chroma parameters)
-        self.right_col = tk.Frame(main_content, bg="#FFFFFF", relief="ridge", bd=1, width=560)
-        self.right_col.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=(7, 0))
+        # Right Column (Settings & Chroma parameters) - scrollable with smooth mousewheel
+        self.r_scroll = ctk.CTkScrollableFrame(
+            main_content, corner_radius=12, fg_color="transparent", width=560
+        )
+        self.r_scroll.pack(side="right", fill="both", expand=True, padx=(8, 0))
 
-        # 3. Bottom Status Bar
-        bottom_bar = tk.Frame(self.root, bg="#FFFFFF", relief="ridge", bd=1, height=60)
-        bottom_bar.pack(side=tk.BOTTOM, fill=tk.X, padx=14, pady=(0, 10))
+        # 3. Bottom Action Bar
+        bottom_bar = ctk.CTkFrame(self.root, corner_radius=12, fg_color="#FFFFFF", border_width=1, border_color="#E2E8F0", height=60)
+        bottom_bar.pack(side="bottom", fill="x", padx=16, pady=(0, 12))
         bottom_bar.pack_propagate(False)
 
-        self.status_label = tk.Label(bottom_bar, textvariable=self.status_var,
-                                     font=("Segoe UI", 9), fg="#334155", bg="#FFFFFF")
-        self.status_label.pack(side=tk.LEFT, padx=16, pady=14)
+        self.status_label = ctk.CTkLabel(bottom_bar, textvariable=self.status_var,
+                                         font=("Segoe UI", 11), text_color="#475569")
+        self.status_label.pack(side="left", padx=18, pady=14)
 
-        self.progress_bar = ttk.Progressbar(bottom_bar, orient=tk.HORIZONTAL, length=240, mode="determinate")
-        self.progress_bar.pack(side=tk.LEFT, padx=10, pady=14)
+        self.progress_bar = ctk.CTkProgressBar(bottom_bar, orientation="horizontal", width=220, mode="determinate",
+                                               corner_radius=6, progress_color="#2563EB", fg_color="#E2E8F0")
+        self.progress_bar.set(0)
+        self.progress_bar.pack(side="left", padx=12, pady=18)
 
-        self.btn_generate = tk.Button(bottom_bar, text="Generate print files",
-                                      font=("Segoe UI", 11, "bold"), bg="#2563EB", fg="#FFFFFF",
-                                      activebackground="#1D4ED8", activeforeground="#FFFFFF",
-                                      relief="flat", cursor="hand2", padx=20, pady=6, command=self._start_generation)
-        self.btn_generate.pack(side=tk.RIGHT, padx=16, pady=10)
+        self.btn_generate = ctk.CTkButton(
+            bottom_bar, text="Generate print files", font=("Segoe UI", 12, "bold"),
+            fg_color="#1D4ED8", hover_color="#1E40AF", text_color="#FFFFFF",
+            corner_radius=8, width=170, height=36, command=self._start_generation
+        )
+        self.btn_generate.pack(side="right", padx=18, pady=12)
 
-        tk.Button(bottom_bar, text="Open output folder", font=("Segoe UI", 9),
-                  bg="#F1F5F9", fg="#334155", relief="flat", cursor="hand2",
-                  padx=12, pady=6, command=self._open_output_folder).pack(side=tk.RIGHT, padx=6, pady=10)
+        ctk.CTkButton(
+            bottom_bar, text="Open output folder", font=("Segoe UI", 11),
+            fg_color="#FFFFFF", hover_color="#F8FAFC", text_color="#334155",
+            border_width=1, border_color="#CBD5E1", corner_radius=8,
+            width=140, height=36, command=self._open_output_folder
+        ).pack(side="right", padx=6, pady=12)
 
         # Build column internals
         self._build_left_column()
         self._build_right_column()
-
-        # Global mouse wheel scrolling across platforms
-        def _is_desc(widget, target):
-            cur = widget
-            while cur:
-                if cur == target:
-                    return True
-                try:
-                    cur = cur.master
-                except Exception:
-                    return False
-            return False
-
-        def _on_global_mousewheel(e):
-            delta = e.delta if e.delta else (-120 if getattr(e, 'num', None) == 5 else 120)
-            step = int(-1 * (delta / 120))
-            try:
-                w = self.root.winfo_containing(e.x_root, e.y_root)
-            except Exception:
-                return
-            if not w:
-                return
-            if hasattr(self, 'tbl_container') and _is_desc(w, self.tbl_container):
-                self.tbl_canvas.yview_scroll(step, "units")
-            elif hasattr(self, 'right_col') and _is_desc(w, self.right_col):
-                self.r_canvas.yview_scroll(step, "units")
-
-        self.root.bind_all("<MouseWheel>", _on_global_mousewheel)
-        self.root.bind_all("<Button-4>", _on_global_mousewheel)
-        self.root.bind_all("<Button-5>", _on_global_mousewheel)
 
     # --------------------------------------------------------------------------
     # LEFT COLUMN: IMAGES & PREVIEW
@@ -787,188 +773,197 @@ class TAMPGUI:
     def _build_left_column(self):
         f = self.left_col
 
-        # Section 1: Images Header
-        hdr = tk.Frame(f, bg="#FFFFFF")
-        hdr.pack(fill=tk.X, padx=14, pady=(12, 6))
+        # Card 1: Images
+        self.card_images = ctk.CTkFrame(f, corner_radius=12, fg_color="#FFFFFF", border_width=1, border_color="#E2E8F0")
+        self.card_images.pack(fill="x", pady=(0, 10))
 
-        tk.Label(hdr, text="1. Images", font=("Segoe UI", 12, "bold"),
-                 fg="#0F172A", bg="#FFFFFF").pack(side=tk.LEFT)
-        self.lbl_img_count = tk.Label(hdr, text="0 images", font=("Segoe UI", 9),
-                                      fg="#64748B", bg="#FFFFFF")
-        self.lbl_img_count.pack(side=tk.LEFT, padx=8)
+        c1_hdr = ctk.CTkFrame(self.card_images, fg_color="transparent")
+        c1_hdr.pack(fill="x", padx=16, pady=(12, 4))
 
-        tk.Button(hdr, text="+ Add images…", font=("Segoe UI", 9, "bold"),
-                  bg="#EFF6FF", fg="#2563EB", activebackground="#DBEAFE",
-                  relief="flat", cursor="hand2", padx=10, pady=2,
-                  command=self._add_images_dialog).pack(side=tk.RIGHT)
-        tk.Button(hdr, text="Clear", font=("Segoe UI", 8),
-                  bg="#F8FAFC", fg="#94A3B8", relief="flat", cursor="hand2",
-                  command=self._clear_images).pack(side=tk.RIGHT, padx=4)
+        ctk.CTkLabel(c1_hdr, text="1. Images", font=("Segoe UI", 14, "bold"),
+                     text_color="#0F172A").pack(side="left")
+        self.lbl_img_count = ctk.CTkLabel(c1_hdr, text="0 images", font=("Segoe UI", 11),
+                                          text_color="#64748B")
+        self.lbl_img_count.pack(side="left", padx=10)
 
-        # Images Table
-        self.tbl_container = tk.Frame(f, bg="#F8FAFC", relief="solid", bd=1, height=130)
-        self.tbl_container.pack(fill=tk.X, padx=14, pady=4)
-        self.tbl_container.pack_propagate(False)
+        ctk.CTkButton(c1_hdr, text="Clear", font=("Segoe UI", 11),
+                      fg_color="transparent", text_color="#94A3B8", hover_color="#F1F5F9",
+                      width=48, height=24, corner_radius=6,
+                      command=self._clear_images).pack(side="right")
 
-        # Table header
-        th = tk.Frame(self.tbl_container, bg="#E2E8F0")
-        th.pack(fill=tk.X)
+        # Dropzone / Add button box
+        dz = ctk.CTkFrame(self.card_images, corner_radius=8, fg_color="#F8FAFC", border_width=1, border_color="#CBD5E1")
+        dz.pack(fill="x", padx=16, pady=4)
+
+        dz_content = ctk.CTkFrame(dz, fg_color="transparent")
+        dz_content.pack(pady=8)
+        ctk.CTkLabel(dz_content, text="↑  Drop images here or", font=("Segoe UI", 11),
+                     text_color="#64748B").pack(side="left", padx=(0, 8))
+        ctk.CTkButton(dz_content, text="Add images…", font=("Segoe UI", 11, "bold"),
+                      fg_color="#FFFFFF", text_color="#2563EB", hover_color="#EFF6FF",
+                      border_width=1, border_color="#2563EB", corner_radius=6,
+                      width=96, height=28, command=self._add_images_dialog).pack(side="left")
+
+        # Table header row
+        th = ctk.CTkFrame(self.card_images, fg_color="transparent")
+        th.pack(fill="x", padx=20, pady=(6, 2))
         th.columnconfigure(0, weight=1)
-        th.columnconfigure(1, minsize=86)
+        th.columnconfigure(1, minsize=96)
         th.columnconfigure(2, minsize=80)
-        th.columnconfigure(3, minsize=34)
-        th.columnconfigure(4, minsize=17)
+        th.columnconfigure(3, minsize=32)
 
-        tk.Label(th, text="Image", font=("Segoe UI", 8, "bold"), fg="#475569", bg="#E2E8F0", anchor="w").grid(row=0, column=0, sticky="w", padx=(10, 4), pady=3)
-        tk.Label(th, text="Quality", font=("Segoe UI", 8, "bold"), fg="#475569", bg="#E2E8F0", anchor="center").grid(row=0, column=1, sticky="nsew", padx=2, pady=3)
-        self.th_invert_lbl = tk.Label(th, text="Invert", font=("Segoe UI", 8, "bold"), fg="#475569", bg="#E2E8F0", anchor="center")
-        self.th_invert_lbl.grid(row=0, column=2, sticky="nsew", padx=2, pady=3)
-        tk.Label(th, text="", bg="#E2E8F0").grid(row=0, column=3, sticky="nsew")
+        ctk.CTkLabel(th, text="Image", font=("Segoe UI", 11, "bold"), text_color="#64748B", anchor="w").grid(row=0, column=0, sticky="w")
+        ctk.CTkLabel(th, text="Quality", font=("Segoe UI", 11, "bold"), text_color="#64748B").grid(row=0, column=1)
+        self.th_invert_lbl = ctk.CTkLabel(th, text="Invert", font=("Segoe UI", 11, "bold"), text_color="#64748B")
+        self.th_invert_lbl.grid(row=0, column=2)
+        ctk.CTkLabel(th, text="").grid(row=0, column=3)
 
-        # Scrollable image items list
-        self.tbl_canvas = tk.Canvas(self.tbl_container, bg="#FFFFFF", bd=0, highlightthickness=0)
-        tbl_scrollbar = ttk.Scrollbar(self.tbl_container, orient="vertical", command=self.tbl_canvas.yview)
-        tbl_scrollbar.bind("<Configure>", lambda e: th.columnconfigure(4, minsize=e.width) if e.width > 1 else None)
-        self.tbl_inner = tk.Frame(self.tbl_canvas, bg="#FFFFFF")
-        self.tbl_canvas.configure(yscrollcommand=tbl_scrollbar.set)
-        tbl_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        self.tbl_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        self.tbl_win = self.tbl_canvas.create_window((0, 0), window=self.tbl_inner, anchor="nw")
-        self.tbl_inner.bind("<Configure>", lambda e: self.tbl_canvas.configure(scrollregion=self.tbl_canvas.bbox("all")))
-        self.tbl_canvas.bind("<Configure>", lambda e: self.tbl_canvas.itemconfig(self.tbl_win, width=e.width))
+        # Image list items container
+        self.tbl_items_frame = ctk.CTkScrollableFrame(self.card_images, corner_radius=8, fg_color="transparent", height=130)
+        self.tbl_items_frame.pack(fill="both", expand=True, padx=14, pady=(2, 12))
 
-        # Preview Section
-        sep = ttk.Separator(f, orient="horizontal")
-        sep.pack(fill=tk.X, padx=14, pady=8)
+        # Card 2: Relief Preview
+        self.card_preview = ctk.CTkFrame(f, corner_radius=12, fg_color="#FFFFFF", border_width=1, border_color="#E2E8F0")
+        self.card_preview.pack(fill="both", expand=True, pady=(0, 6))
 
-        prev_hdr = tk.Frame(f, bg="#FFFFFF")
-        prev_hdr.pack(fill=tk.X, padx=14, pady=(2, 4))
-        self.lbl_preview_title = tk.Label(prev_hdr, text="Relief preview", font=("Segoe UI", 11, "bold"),
-                                          fg="#0F172A", bg="#FFFFFF")
-        self.lbl_preview_title.pack(side=tk.LEFT)
+        p_hdr = ctk.CTkFrame(self.card_preview, fg_color="transparent")
+        p_hdr.pack(fill="x", padx=16, pady=(12, 6))
+        self.lbl_preview_title = ctk.CTkLabel(p_hdr, text="Relief preview", font=("Segoe UI", 14, "bold"),
+                                              text_color="#0F172A")
+        self.lbl_preview_title.pack(side="left")
 
-        tk.Button(prev_hdr, text="Open 3D view", font=("Segoe UI", 9, "bold"),
-                  bg="#F0FDF4", fg="#16A34A", activebackground="#DCFCE7",
-                  relief="flat", cursor="hand2", padx=10, pady=2,
-                  command=self._launch_pyvista_3d).pack(side=tk.RIGHT)
+        self.lbl_preview_fname = ctk.CTkLabel(p_hdr, text="", font=("Segoe UI", 11),
+                                              text_color="#64748B")
+        self.lbl_preview_fname.pack(side="left", padx=10)
 
-        # Meta tags badge row
-        self.meta_badge_frame = tk.Frame(f, bg="#FFFFFF")
-        self.meta_badge_frame.pack(fill=tk.X, padx=14, pady=2)
-        self.lbl_meta_raised = tk.Label(self.meta_badge_frame, text="Raised: Light areas", font=("Segoe UI", 8),
-                                        bg="#F1F5F9", fg="#475569", padx=6, pady=2)
-        self.lbl_meta_raised.pack(side=tk.LEFT, padx=(0, 4))
-        self.lbl_meta_size = tk.Label(self.meta_badge_frame, text="Size: 100 × 75 mm", font=("Segoe UI", 8),
-                                      bg="#F1F5F9", fg="#475569", padx=6, pady=2)
-        self.lbl_meta_size.pack(side=tk.LEFT, padx=4)
-        self.lbl_meta_res = tk.Label(self.meta_badge_frame, text="Res: 256 px", font=("Segoe UI", 8),
-                                     bg="#F1F5F9", fg="#475569", padx=6, pady=2)
-        self.lbl_meta_res.pack(side=tk.LEFT, padx=4)
-        self.lbl_meta_stl = tk.Label(self.meta_badge_frame, text="Est. STL: ~9.4 MB", font=("Segoe UI", 8),
-                                     bg="#F1F5F9", fg="#475569", padx=6, pady=2)
-        self.lbl_meta_stl.pack(side=tk.LEFT, padx=4)
+        ctk.CTkButton(p_hdr, text="Open 3D view", font=("Segoe UI", 11, "bold"),
+                      fg_color="#F0FDF4", text_color="#16A34A", hover_color="#DCFCE7",
+                      border_width=1, border_color="#BBF7D0", corner_radius=6,
+                      width=110, height=28, command=self._launch_pyvista_3d).pack(side="right")
 
-        # Preview Display Container
-        self.prev_container = tk.Frame(f, bg="#0F172A", height=280)
-        self.prev_container.pack(fill=tk.BOTH, expand=True, padx=14, pady=6)
-        self.lbl_preview_image = tk.Label(self.prev_container, bg="#0F172A")
-        self.lbl_preview_image.pack(fill=tk.BOTH, expand=True)
+        # Preview content body: 2-column layout (Image on left, Meta specs on right)
+        prev_body = ctk.CTkFrame(self.card_preview, fg_color="transparent")
+        prev_body.pack(fill="both", expand=True, padx=16, pady=4)
+
+        # Left side: Preview display
+        self.prev_img_box = ctk.CTkFrame(prev_body, corner_radius=8, fg_color="#0F172A", width=280, height=210)
+        self.prev_img_box.pack(side="left", padx=(0, 14), fill="both", expand=True)
+        self.prev_img_box.pack_propagate(False)
+
+        self.lbl_preview_image = ctk.CTkLabel(self.prev_img_box, text="No preview available",
+                                              text_color="#94A3B8")
+        self.lbl_preview_image.pack(fill="both", expand=True)
+
+        # Right side: Meta Specs Grid
+        self.meta_frame = ctk.CTkFrame(prev_body, fg_color="transparent", width=200)
+        self.meta_frame.pack(side="right", fill="y", anchor="n", pady=6)
+
+        specs = [
+            ("Raised areas", "Light areas", "lbl_meta_raised"),
+            ("Print size", "100 × 75 mm", "lbl_meta_size"),
+            ("Resolution", "128 px", "lbl_meta_res"),
+            ("Est. STL", "~2.3 MB", "lbl_meta_stl"),
+        ]
+        for key, default_val, attr_name in specs:
+            row = ctk.CTkFrame(self.meta_frame, fg_color="transparent")
+            row.pack(fill="x", pady=4)
+            ctk.CTkLabel(row, text=key + ":", font=("Segoe UI", 11),
+                         text_color="#64748B", width=85, anchor="w").pack(side="left")
+            val_lbl = ctk.CTkLabel(row, text=default_val, font=("Segoe UI", 11, "bold"),
+                                   text_color="#0F172A", anchor="w")
+            val_lbl.pack(side="left", padx=4)
+            setattr(self, attr_name, val_lbl)
 
         # Cross section plot container (visible in Chroma mode)
-        self.plot_container = tk.Frame(f, bg="#FFFFFF", height=100)
+        self.plot_container = ctk.CTkFrame(self.card_preview, fg_color="transparent", height=100)
         self.plot_canvas = None
 
-        # Helper hint text at bottom of left column
-        self.lbl_preview_hint = tk.Label(f, text="Light = raised, dark = low. Check this before generating: if the feature you want to feel is sunk, tick Invert.",
-                                         font=("Segoe UI", 8), fg="#64748B", bg="#FFFFFF", wraplength=480, justify="left")
-        self.lbl_preview_hint.pack(fill=tk.X, padx=14, pady=(2, 10))
+        # Helper hint text
+        self.lbl_preview_hint = ctk.CTkLabel(
+            self.card_preview,
+            text="Light = raised, dark = low. Check this before generating: if the feature you want to feel is sunk, tick Invert.",
+            font=("Segoe UI", 10), text_color="#64748B", wraplength=500, justify="left"
+        )
+        self.lbl_preview_hint.pack(fill="x", padx=16, pady=(4, 12))
 
     # --------------------------------------------------------------------------
     # RIGHT COLUMN: CHROMA CONTROLS + SHARED SETTINGS
     # --------------------------------------------------------------------------
     def _build_right_column(self):
-        f = self.right_col
-
-        # Scrollable container for the right column
-        r_canvas = tk.Canvas(f, bg="#FFFFFF", bd=0, highlightthickness=0)
-        r_scrollbar = ttk.Scrollbar(f, orient="vertical", command=r_canvas.yview)
-        self.r_inner = tk.Frame(r_canvas, bg="#FFFFFF")
-        r_canvas.configure(yscrollcommand=r_scrollbar.set)
-        r_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        r_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        r_win = r_canvas.create_window((0, 0), window=self.r_inner, anchor="nw")
-        self.r_inner.bind("<Configure>", lambda e: r_canvas.configure(scrollregion=r_canvas.bbox("all")))
-        r_canvas.bind("<Configure>", lambda e: r_canvas.itemconfig(r_win, width=e.width))
-
-        self.r_canvas = r_canvas
-        rf = self.r_inner
+        rf = self.r_scroll
 
         # -------------------- CHROMA CONTAINER (TOP OF RIGHT COL) --------------------
-        self.chroma_container = tk.Frame(rf, bg="#FFFFFF")
-        self.chroma_frame = tk.Frame(self.chroma_container, bg="#F8FAFC", bd=1, relief="solid")
+        self.card_chroma = ctk.CTkFrame(rf, corner_radius=12, fg_color="#FFFFFF", border_width=1, border_color="#E2E8F0")
+        # Do not pack card_chroma initially; _update_mode_ui() packs it if mode == "chroma"
 
-        ch_hdr = tk.Frame(self.chroma_frame, bg="#F8FAFC")
-        ch_hdr.pack(fill=tk.X, padx=12, pady=(10, 4))
-        tk.Label(ch_hdr, text="Chroma · colormap & texture", font=("Segoe UI", 11, "bold"),
-                 fg="#0F172A", bg="#F8FAFC").pack(anchor="w")
-        tk.Label(ch_hdr, text="Color value → ramp height + texture", font=("Segoe UI", 8),
-                 fg="#64748B", bg="#F8FAFC").pack(anchor="w")
+        ch_hdr = ctk.CTkFrame(self.card_chroma, fg_color="transparent")
+        ch_hdr.pack(fill="x", padx=16, pady=(12, 4))
+        ctk.CTkLabel(ch_hdr, text="Chroma · colormap & texture", font=("Segoe UI", 14, "bold"),
+                     text_color="#0F172A").pack(anchor="w")
+        ctk.CTkLabel(ch_hdr, text="Color value → ramp height + texture", font=("Segoe UI", 11),
+                     text_color="#64748B").pack(anchor="w")
 
         # Colormap row
-        cm_row = tk.Frame(self.chroma_frame, bg="#F8FAFC")
-        cm_row.pack(fill=tk.X, padx=12, pady=4)
-        tk.Label(cm_row, text="Colormap:", font=("Segoe UI", 9, "bold"),
-                 fg="#334155", bg="#F8FAFC").pack(side=tk.LEFT)
+        cm_row = ctk.CTkFrame(self.card_chroma, fg_color="transparent")
+        cm_row.pack(fill="x", padx=16, pady=4)
+        ctk.CTkLabel(cm_row, text="Colormap:", font=("Segoe UI", 11, "bold"),
+                     text_color="#334155").pack(side="left")
 
-        self.cm_combo = ttk.Combobox(cm_row, textvariable=self.chroma_colormap_var,
-                                     values=SUPPORTED_COLORMAPS, state="readonly", width=14)
-        self.cm_combo.pack(side=tk.LEFT, padx=8)
-        self.cm_combo.bind("<<ComboboxSelected>>", self._on_colormap_changed)
+        self.cm_combo = ctk.CTkComboBox(
+            cm_row, values=SUPPORTED_COLORMAPS, state="readonly", width=140, height=28,
+            corner_radius=6, fg_color="#FFFFFF", border_width=1, border_color="#CBD5E1",
+            button_color="#F1F5F9", button_hover_color="#E2E8F0", text_color="#0F172A",
+            dropdown_fg_color="#FFFFFF", dropdown_text_color="#0F172A", dropdown_hover_color="#EFF6FF",
+            command=self._on_colormap_changed
+        )
+        self.cm_combo.set(self.chroma_colormap_var.get())
+        self.cm_combo.pack(side="left", padx=8)
 
         # Gradient Canvas preview bar
-        self.cmap_canvas = tk.Canvas(cm_row, width=140, height=18, bd=1, relief="solid")
-        self.cmap_canvas.pack(side=tk.LEFT, padx=4)
+        self.cmap_canvas = tk.Canvas(cm_row, width=140, height=18, bd=1, relief="solid", highlightthickness=0)
+        self.cmap_canvas.pack(side="left", padx=4)
 
         # Polarity checkbox
-        pol_row = tk.Frame(self.chroma_frame, bg="#F8FAFC")
-        pol_row.pack(fill=tk.X, padx=12, pady=2)
-        tk.Checkbutton(pol_row, text="Invert polarity (high values = flat/untextured)",
-                       variable=self.chroma_polarity_var, bg="#F8FAFC",
-                       font=("Segoe UI", 8), command=self._update_preview).pack(anchor="w")
+        pol_row = ctk.CTkFrame(self.card_chroma, fg_color="transparent")
+        pol_row.pack(fill="x", padx=16, pady=2)
+        ctk.CTkCheckBox(pol_row, text="Invert polarity (high values = flat/untextured)",
+                        variable=self.chroma_polarity_var, corner_radius=4, fg_color="#2563EB",
+                        text_color="#0F172A", font=("Segoe UI", 11), command=self._update_preview).pack(anchor="w")
 
         # Ramp elevation slider
-        ramp_row = tk.Frame(self.chroma_frame, bg="#F8FAFC")
-        ramp_row.pack(fill=tk.X, padx=12, pady=(6, 2))
-        tk.Label(ramp_row, text="Ramp elevation (mm):", font=("Segoe UI", 9, "bold"),
-                 fg="#334155", bg="#F8FAFC").pack(side=tk.LEFT)
-        self.lbl_ramp_val = tk.Label(ramp_row, text=f"{self.chroma_ramp_var.get():.1f} mm",
-                                     font=("Segoe UI", 9, "bold"), fg="#2563EB", bg="#F8FAFC")
-        self.lbl_ramp_val.pack(side=tk.RIGHT)
+        ramp_row = ctk.CTkFrame(self.card_chroma, fg_color="transparent")
+        ramp_row.pack(fill="x", padx=16, pady=(6, 2))
+        ctk.CTkLabel(ramp_row, text="Ramp elevation (mm):", font=("Segoe UI", 11, "bold"),
+                     text_color="#334155").pack(side="left")
+        self.lbl_ramp_val = ctk.CTkLabel(ramp_row, text=f"{self.chroma_ramp_var.get():.1f} mm",
+                                         font=("Segoe UI", 11, "bold"), text_color="#2563EB")
+        self.lbl_ramp_val.pack(side="right")
 
-        s_ramp = ttk.Scale(self.chroma_frame, from_=0.5, to=4.0, variable=self.chroma_ramp_var,
-                           command=self._on_ramp_slider_move)
-        s_ramp.pack(fill=tk.X, padx=12, pady=2)
+        s_ramp = ctk.CTkSlider(self.card_chroma, from_=0.5, to=4.0, variable=self.chroma_ramp_var,
+                               progress_color="#2563EB", button_color="#2563EB", button_hover_color="#1D4ED8",
+                               command=self._on_ramp_slider_move)
+        s_ramp.pack(fill="x", padx=16, pady=2)
         s_ramp.bind("<ButtonRelease-1>", lambda e: self._update_preview())
-        tk.Label(self.chroma_frame, text="Macroscopic slope on top of the 1.2 mm solid base",
-                 font=("Segoe UI", 7), fg="#64748B", bg="#F8FAFC").pack(anchor="w", padx=12, pady=(0, 6))
+        ctk.CTkLabel(self.card_chroma, text="Macroscopic slope on top of the 1.2 mm solid base",
+                     font=("Segoe UI", 9), text_color="#64748B").pack(anchor="w", padx=16, pady=(0, 6))
 
         # Texture Library grid
-        tk.Label(self.chroma_frame, text="Texture library", font=("Segoe UI", 9, "bold"),
-                 fg="#334155", bg="#F8FAFC").pack(anchor="w", padx=12, pady=(4, 2))
+        ctk.CTkLabel(self.card_chroma, text="Texture library", font=("Segoe UI", 11, "bold"),
+                     text_color="#334155").pack(anchor="w", padx=16, pady=(4, 2))
 
-        self.tex_grid = tk.Frame(self.chroma_frame, bg="#F8FAFC")
-        self.tex_grid.pack(fill=tk.X, padx=12, pady=2)
+        self.tex_grid = ctk.CTkFrame(self.card_chroma, fg_color="transparent")
+        self.tex_grid.pack(fill="x", padx=16, pady=2)
         self.tex_buttons = {}
         textures = ["Dots", "Stripes", "Grid", "Waves", "Scales", "Honeycomb"]
         for i, tex in enumerate(textures):
-            card = tk.Frame(self.tex_grid, bg="#FFFFFF", bd=1, relief="solid", cursor="hand2")
+            card = ctk.CTkFrame(self.tex_grid, corner_radius=8, fg_color="#FFFFFF", border_width=1, border_color="#E2E8F0", cursor="hand2")
             card.grid(row=0, column=i, padx=3, pady=2, sticky="nsew")
             self.tex_grid.columnconfigure(i, weight=1)
 
             cv = tk.Canvas(card, width=44, height=30, bd=0, highlightthickness=0, bg="#FFFFFF")
             cv.pack(padx=2, pady=2)
 
-            lbl = tk.Label(card, text=tex, font=("Segoe UI", 7, "bold"), bg="#FFFFFF", fg="#334155")
+            lbl = ctk.CTkLabel(card, text=tex, font=("Segoe UI", 9, "bold"), text_color="#334155")
             lbl.pack(pady=(0, 3))
 
             def make_handler(t=tex):
@@ -981,123 +976,179 @@ class TAMPGUI:
             self.tex_buttons[tex] = {"frame": card, "canvas": cv, "label": lbl}
 
         # Texture relief slider
-        t_relief_row = tk.Frame(self.chroma_frame, bg="#F8FAFC")
-        t_relief_row.pack(fill=tk.X, padx=12, pady=(6, 2))
-        tk.Label(t_relief_row, text="Texture relief (mm):", font=("Segoe UI", 9, "bold"),
-                 fg="#334155", bg="#F8FAFC").pack(side=tk.LEFT)
-        self.lbl_t_relief_val = tk.Label(t_relief_row, text=f"{self.chroma_relief_var.get():.2f} mm",
-                                         font=("Segoe UI", 9, "bold"), fg="#2563EB", bg="#F8FAFC")
-        self.lbl_t_relief_val.pack(side=tk.RIGHT)
+        t_relief_row = ctk.CTkFrame(self.card_chroma, fg_color="transparent")
+        t_relief_row.pack(fill="x", padx=16, pady=(6, 2))
+        ctk.CTkLabel(t_relief_row, text="Texture relief (mm):", font=("Segoe UI", 11, "bold"),
+                     text_color="#334155").pack(side="left")
+        self.lbl_t_relief_val = ctk.CTkLabel(t_relief_row, text=f"{self.chroma_relief_var.get():.2f} mm",
+                                             font=("Segoe UI", 11, "bold"), text_color="#2563EB")
+        self.lbl_t_relief_val.pack(side="right")
 
-        s_t_relief = ttk.Scale(self.chroma_frame, from_=0.2, to=1.5, variable=self.chroma_relief_var,
-                               command=self._on_texture_relief_slider_move)
-        s_t_relief.pack(fill=tk.X, padx=12, pady=2)
+        s_t_relief = ctk.CTkSlider(self.card_chroma, from_=0.2, to=1.5, variable=self.chroma_relief_var,
+                                   progress_color="#2563EB", button_color="#2563EB", button_hover_color="#1D4ED8",
+                                   command=self._on_texture_relief_slider_move)
+        s_t_relief.pack(fill="x", padx=16, pady=2)
         s_t_relief.bind("<ButtonRelease-1>", lambda e: self._update_preview())
-        tk.Label(self.chroma_frame, text="Height of the micro-texture (0.2–1.5 mm)",
-                 font=("Segoe UI", 7), fg="#64748B", bg="#F8FAFC").pack(anchor="w", padx=12, pady=(0, 8))
+        ctk.CTkLabel(self.card_chroma, text="Height of the micro-texture (0.2–1.5 mm)",
+                     font=("Segoe UI", 9), text_color="#64748B").pack(anchor="w", padx=16, pady=(0, 10))
 
         self._refresh_texture_buttons()
         self._redraw_colormap_bar()
 
         # -------------------- SHARED: 2. PRINTER --------------------
-        self.p_hdr = tk.Frame(rf, bg="#FFFFFF")
-        self.p_hdr.pack(fill=tk.X, padx=14, pady=(10, 2))
-        tk.Label(self.p_hdr, text="2. Printer", font=("Segoe UI", 11, "bold"),
-                 fg="#0F172A", bg="#FFFFFF").pack(side=tk.LEFT)
+        self.card_printer = ctk.CTkFrame(rf, corner_radius=12, fg_color="#FFFFFF", border_width=1, border_color="#E2E8F0")
+        self.card_printer.pack(fill="x", pady=(0, 10))
 
-        pr_row = tk.Frame(rf, bg="#FFFFFF")
-        pr_row.pack(fill=tk.X, padx=14, pady=2)
-        profiles = [
-            "Standard FDM / 0.4 mm nozzle",
-            "Fine-detail FDM / 0.2 mm nozzle",
-            "Large-nozzle FDM / 0.6 mm nozzle",
-            "Custom"
-        ]
-        self.pr_menu = ttk.Combobox(pr_row, textvariable=self.printer_profile_var,
-                                    values=profiles, state="readonly", width=30)
-        self.pr_menu.pack(side=tk.LEFT)
-        self.pr_menu.bind("<<ComboboxSelected>>", self._on_printer_profile_changed)
+        ctk.CTkLabel(self.card_printer, text="2. Printer", font=("Segoe UI", 14, "bold"),
+                     text_color="#0F172A").pack(anchor="w", padx=16, pady=(12, 4))
+        ctk.CTkLabel(self.card_printer, text="Printer preset", font=("Segoe UI", 11),
+                     text_color="#64748B").pack(anchor="w", padx=16, pady=(0, 2))
 
-        self.lbl_pr_summary = tk.Label(pr_row, text="0.4 mm nozzle · 0.12 mm layers · 100 mm wide",
-                                       font=("Segoe UI", 8), fg="#64748B", bg="#FFFFFF")
-        self.lbl_pr_summary.pack(side=tk.LEFT, padx=10)
+        self.pr_menu = ctk.CTkComboBox(
+            self.card_printer, values=[
+                "Standard FDM · 0.4 mm nozzle",
+                "Fine-detail FDM · 0.2 mm nozzle",
+                "Large-nozzle FDM · 0.6 mm nozzle",
+                "Custom"
+            ], state="readonly", corner_radius=8, height=32,
+            fg_color="#FFFFFF", border_width=1, border_color="#CBD5E1",
+            button_color="#F1F5F9", button_hover_color="#E2E8F0",
+            text_color="#0F172A", dropdown_fg_color="#FFFFFF",
+            dropdown_text_color="#0F172A", dropdown_hover_color="#EFF6FF",
+            command=self._on_printer_profile_changed
+        )
+        self.pr_menu.set(self.printer_profile_var.get())
+        self.pr_menu.pack(fill="x", padx=16, pady=4)
+
+        # Chips row
+        self.chips_frame = ctk.CTkFrame(self.card_printer, fg_color="transparent")
+        self.chips_frame.pack(fill="x", padx=16, pady=(6, 14))
+        self.lbl_chip_nozzle = ctk.CTkLabel(self.chips_frame, text="0.4 mm nozzle", corner_radius=10, fg_color="#F1F5F9", text_color="#475569", font=("Segoe UI", 10), padx=8, pady=3)
+        self.lbl_chip_nozzle.pack(side="left", padx=(0, 6))
+        self.lbl_chip_layer = ctk.CTkLabel(self.chips_frame, text="0.12 mm layers", corner_radius=10, fg_color="#F1F5F9", text_color="#475569", font=("Segoe UI", 10), padx=6)
+        self.lbl_chip_layer.pack(side="left", padx=6)
+        self.lbl_chip_size = ctk.CTkLabel(self.chips_frame, text="100 mm wide", corner_radius=10, fg_color="#F1F5F9", text_color="#475569", font=("Segoe UI", 10), padx=6)
+        self.lbl_chip_size.pack(side="left", padx=6)
 
         # -------------------- SHARED: 3. QUALITY --------------------
-        q_hdr = tk.Frame(rf, bg="#FFFFFF")
-        q_hdr.pack(fill=tk.X, padx=14, pady=(12, 2))
-        tk.Label(q_hdr, text="3. Quality", font=("Segoe UI", 11, "bold"),
-                 fg="#0F172A", bg="#FFFFFF").pack(side=tk.LEFT)
-        tk.Label(q_hdr, text="Click a card to apply to all images", font=("Segoe UI", 8),
-                 fg="#64748B", bg="#FFFFFF").pack(side=tk.LEFT, padx=8)
+        self.card_quality = ctk.CTkFrame(rf, corner_radius=12, fg_color="#FFFFFF", border_width=1, border_color="#E2E8F0")
+        self.card_quality.pack(fill="x", pady=(0, 10))
 
-        # 3 Quality cards row
-        q_cards_frame = tk.Frame(rf, bg="#FFFFFF")
-        q_cards_frame.pack(fill=tk.X, padx=14, pady=4)
+        q_hdr = ctk.CTkFrame(self.card_quality, fg_color="transparent")
+        q_hdr.pack(fill="x", padx=16, pady=(12, 6))
+        ctk.CTkLabel(q_hdr, text="3. Quality", font=("Segoe UI", 14, "bold"),
+                     text_color="#0F172A").pack(side="left")
+        ctk.CTkLabel(q_hdr, text="Click a card to apply it to all images", font=("Segoe UI", 11),
+                     text_color="#64748B").pack(side="right")
+
+        # 3 Side by side cards
+        q_cards_frame = ctk.CTkFrame(self.card_quality, fg_color="transparent")
+        q_cards_frame.pack(fill="x", padx=14, pady=4)
+        q_cards_frame.columnconfigure(0, weight=1)
+        q_cards_frame.columnconfigure(1, weight=1)
+        q_cards_frame.columnconfigure(2, weight=1)
+
         self.q_cards = {}
         q_specs = [
-            ("Low", "Quick draft\n~2.3 MB STL · 128 px", "#F0FDF4", "#16A34A"),
-            ("Medium", "Balanced detail\n~9.4 MB STL · 256 px", "#EFF6FF", "#2563EB"),
-            ("High", "Maximum detail\n~37.5 MB STL · 512 px", "#FFF7ED", "#EA580C")
+            ("Low", "Quick draft", "~2.3 MB STL · 128 px"),
+            ("Medium", "Balanced detail", "~9.4 MB STL · 256 px"),
+            ("High", "Maximum detail", "~37.5 MB STL · 512 px")
         ]
-        for col, (name, desc, bg_c, fg_c) in enumerate(q_specs):
-            card = tk.Frame(q_cards_frame, bg=bg_c, bd=1, relief="solid", cursor="hand2")
-            card.grid(row=0, column=col, padx=4, pady=2, sticky="nsew")
-            q_cards_frame.columnconfigure(col, weight=1)
+        for col_idx, (name, subtitle, details) in enumerate(q_specs):
+            card = ctk.CTkFrame(q_cards_frame, corner_radius=10, fg_color="#F8FAFC", border_width=1.5, border_color="#E2E8F0", cursor="hand2")
+            card.grid(row=0, column=col_idx, padx=4, pady=2, sticky="nsew")
 
-            t_lbl = tk.Label(card, text=name, font=("Segoe UI", 10, "bold"), bg=bg_c, fg=fg_c)
-            t_lbl.pack(pady=(6, 2))
-            d_lbl = tk.Label(card, text=desc, font=("Segoe UI", 8), bg=bg_c, fg="#475569", justify="center")
-            d_lbl.pack(padx=4, pady=(0, 6))
+            top_r = ctk.CTkFrame(card, fg_color="transparent")
+            top_r.pack(fill="x", padx=10, pady=(8, 2))
+            t_lbl = ctk.CTkLabel(top_r, text=name, font=("Segoe UI", 13, "bold"), text_color="#0F172A")
+            t_lbl.pack(side="left")
 
-            def make_q_handler(q_val=name):
-                return lambda e: self._select_quality_card(q_val)
+            sug_badge = ctk.CTkLabel(top_r, text="Suggested", font=("Segoe UI", 9, "bold"),
+                                     fg_color="#0F172A", text_color="#FFFFFF", corner_radius=6, padx=6, pady=1)
 
-            card.bind("<Button-1>", make_q_handler())
-            t_lbl.bind("<Button-1>", make_q_handler())
-            d_lbl.bind("<Button-1>", make_q_handler())
-            self.q_cards[name] = {"frame": card, "bg": bg_c, "title": t_lbl, "desc": d_lbl}
+            s_lbl = ctk.CTkLabel(card, text=subtitle, font=("Segoe UI", 10), text_color="#475569")
+            s_lbl.pack(anchor="w", padx=10, pady=1)
+            d_lbl = ctk.CTkLabel(card, text=details, font=("Segoe UI", 9), text_color="#64748B")
+            d_lbl.pack(anchor="w", padx=10, pady=(1, 8))
 
-        self.lbl_suggestion = tk.Label(rf, text="Add images to see resolution guidance.",
-                                       font=("Segoe UI", 8), fg="#0284C7", bg="#FFFFFF", wraplength=480, justify="left")
-        self.lbl_suggestion.pack(anchor="w", padx=14, pady=2)
+            def make_handler(q_name=name):
+                return lambda e: self._select_quality_card(q_name)
+
+            card.bind("<Button-1>", make_handler())
+            t_lbl.bind("<Button-1>", make_handler())
+            s_lbl.bind("<Button-1>", make_handler())
+            d_lbl.bind("<Button-1>", make_handler())
+            self.q_cards[name] = {"frame": card, "title": t_lbl, "badge": sug_badge}
+
+        # Suggestion Banner
+        self.sug_banner = ctk.CTkFrame(self.card_quality, corner_radius=8, fg_color="#EFF6FF", border_width=1, border_color="#BFDBFE")
+        self.sug_banner.pack(fill="x", padx=16, pady=(6, 14))
+
+        self.lbl_suggestion = ctk.CTkLabel(self.sug_banner, text="Add images to see resolution guidance.",
+                                           font=("Segoe UI", 11), text_color="#1E40AF", justify="left")
+        self.lbl_suggestion.pack(side="left", padx=12, pady=8)
+
+        self.btn_use_suggestion = ctk.CTkButton(
+            self.sug_banner, text="Use suggestion", font=("Segoe UI", 11, "bold"),
+            fg_color="#FFFFFF", text_color="#2563EB", hover_color="#DBEAFE",
+            border_width=1, border_color="#2563EB", corner_radius=6,
+            width=110, height=26, command=self._apply_suggested_preset
+        )
+        self.btn_use_suggestion.pack(side="right", padx=12, pady=8)
 
         # -------------------- SHARED: 4. OUTPUT --------------------
-        o_hdr = tk.Frame(rf, bg="#FFFFFF")
-        o_hdr.pack(fill=tk.X, padx=14, pady=(12, 2))
-        tk.Label(o_hdr, text="4. Output", font=("Segoe UI", 11, "bold"),
-                 fg="#0F172A", bg="#FFFFFF").pack(side=tk.LEFT)
+        self.card_output = ctk.CTkFrame(rf, corner_radius=12, fg_color="#FFFFFF", border_width=1, border_color="#E2E8F0")
+        self.card_output.pack(fill="x", pady=(0, 10))
 
-        out_row = tk.Frame(rf, bg="#FFFFFF")
-        out_row.pack(fill=tk.X, padx=14, pady=2)
-        tk.Label(out_row, text="Folder:", font=("Segoe UI", 9), fg="#334155", bg="#FFFFFF").pack(side=tk.LEFT)
-        self.ent_output = tk.Entry(out_row, textvariable=self.output_dir_var, font=("Segoe UI", 8), width=36)
-        self.ent_output.pack(side=tk.LEFT, padx=6)
-        tk.Button(out_row, text="Browse…", font=("Segoe UI", 8),
-                  command=self._browse_output_dir).pack(side=tk.LEFT)
+        ctk.CTkLabel(self.card_output, text="4. Output", font=("Segoe UI", 14, "bold"),
+                     text_color="#0F172A").pack(anchor="w", padx=16, pady=(12, 4))
 
-        fmt_row = tk.Frame(rf, bg="#FFFFFF")
-        fmt_row.pack(fill=tk.X, padx=14, pady=4)
-        tk.Label(fmt_row, text="Formats:", font=("Segoe UI", 9), fg="#334155", bg="#FFFFFF").pack(side=tk.LEFT)
-        tk.Checkbutton(fmt_row, text=".STL", variable=self.fmt_stl_var, bg="#FFFFFF", font=("Segoe UI", 8, "bold")).pack(side=tk.LEFT, padx=6)
-        tk.Checkbutton(fmt_row, text=".3MF", variable=self.fmt_3mf_var, bg="#FFFFFF", font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=6)
-        tk.Checkbutton(fmt_row, text=".GLB", variable=self.fmt_glb_var, bg="#FFFFFF", font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=6)
+        ctk.CTkLabel(self.card_output, text="Save to folder", font=("Segoe UI", 11),
+                     text_color="#64748B").pack(anchor="w", padx=16, pady=(0, 2))
+
+        out_row = ctk.CTkFrame(self.card_output, fg_color="transparent")
+        out_row.pack(fill="x", padx=16, pady=4)
+        self.ent_output = ctk.CTkEntry(out_row, textvariable=self.output_dir_var, corner_radius=8, height=32,
+                                       border_color="#CBD5E1", fg_color="#FFFFFF", text_color="#0F172A", font=("Segoe UI", 11))
+        self.ent_output.pack(side="left", fill="x", expand=True, padx=(0, 8))
+        ctk.CTkButton(out_row, text="Browse…", font=("Segoe UI", 11),
+                      fg_color="#FFFFFF", text_color="#334155", hover_color="#F1F5F9",
+                      border_width=1, border_color="#CBD5E1", corner_radius=8,
+                      width=80, height=32, command=self._browse_output_dir).pack(side="right")
+
+        ctk.CTkLabel(self.card_output, text="File formats", font=("Segoe UI", 11),
+                     text_color="#64748B").pack(anchor="w", padx=16, pady=(6, 2))
+
+        fmt_row = ctk.CTkFrame(self.card_output, fg_color="transparent")
+        fmt_row.pack(fill="x", padx=16, pady=(2, 14))
+        ctk.CTkCheckBox(fmt_row, text=".STL", variable=self.fmt_stl_var, corner_radius=4,
+                        fg_color="#2563EB", text_color="#0F172A", font=("Segoe UI", 11, "bold")).pack(side="left", padx=(0, 14))
+        ctk.CTkCheckBox(fmt_row, text=".3MF", variable=self.fmt_3mf_var, corner_radius=4,
+                        fg_color="#2563EB", text_color="#0F172A", font=("Segoe UI", 11)).pack(side="left", padx=14)
+        ctk.CTkCheckBox(fmt_row, text=".GLB", variable=self.fmt_glb_var, corner_radius=4,
+                        fg_color="#2563EB", text_color="#0F172A", font=("Segoe UI", 11)).pack(side="left", padx=14)
 
         # -------------------- ADVANCED SETTINGS (COLLAPSIBLE) --------------------
-        adv_toggle_row = tk.Frame(rf, bg="#FFFFFF")
-        adv_toggle_row.pack(fill=tk.X, padx=14, pady=(12, 2))
-        self.btn_adv_toggle = tk.Button(adv_toggle_row, text="▶ Advanced settings", font=("Segoe UI", 9, "bold"),
-                                        fg="#475569", bg="#FFFFFF", relief="flat", cursor="hand2",
-                                        command=self._toggle_advanced)
-        self.btn_adv_toggle.pack(side=tk.LEFT)
-        tk.Label(adv_toggle_row, text="Physical dimensions, layer height, blur, base",
-                 font=("Segoe UI", 8), fg="#94A3B8", bg="#FFFFFF").pack(side=tk.LEFT, padx=6)
+        self.card_advanced = ctk.CTkFrame(rf, corner_radius=12, fg_color="#FFFFFF", border_width=1, border_color="#E2E8F0")
+        self.card_advanced.pack(fill="x", pady=(0, 14))
 
-        self.adv_frame = tk.Frame(rf, bg="#F8FAFC", bd=1, relief="solid")
-        # Populated in _build_advanced_controls
+        adv_hdr = ctk.CTkFrame(self.card_advanced, fg_color="transparent", cursor="hand2")
+        adv_hdr.pack(fill="x", padx=16, pady=12)
+
+        self.btn_adv_toggle = ctk.CTkButton(
+            adv_hdr, text="▶  Advanced settings", font=("Segoe UI", 12, "bold"),
+            fg_color="transparent", text_color="#0F172A", hover_color="#F8FAFC",
+            anchor="w", command=self._toggle_advanced
+        )
+        self.btn_adv_toggle.pack(side="left")
+        ctk.CTkLabel(adv_hdr, text="Print size, nozzle, layers, relief, blur, base",
+                     font=("Segoe UI", 10), text_color="#64748B").pack(side="right")
+
+        self.adv_content = ctk.CTkFrame(self.card_advanced, fg_color="transparent")
         self._build_advanced_controls()
 
     def _build_advanced_controls(self):
-        af = self.adv_frame
+        af = self.adv_content
         params = [
             ("Print width (mm)", self.size_x_var, "Width of lithograph"),
             ("Print height (mm)", self.size_y_var, "'auto' preserves aspect ratio"),
@@ -1108,66 +1159,63 @@ class TAMPGUI:
             ("Blur (sigma)", self.blur_var, "Smooths sensor noise before meshing"),
             ("Base thickness (mm)", self.base_thickness_var, "Solid rigid base below relief"),
         ]
-        for i, (label_txt, var, hint) in enumerate(params):
-            r = tk.Frame(af, bg="#F8FAFC")
-            r.pack(fill=tk.X, padx=10, pady=2)
-            tk.Label(r, text=label_txt + ":", font=("Segoe UI", 8), fg="#334155", bg="#F8FAFC", width=20, anchor="w").pack(side=tk.LEFT)
-            tk.Entry(r, textvariable=var, font=("Segoe UI", 8), width=10).pack(side=tk.LEFT, padx=4)
-            tk.Label(r, text=hint, font=("Segoe UI", 7), fg="#94A3B8", bg="#F8FAFC").pack(side=tk.LEFT, padx=6)
+        for label_txt, var, hint in params:
+            r = ctk.CTkFrame(af, fg_color="transparent")
+            r.pack(fill="x", padx=16, pady=3)
+            ctk.CTkLabel(r, text=label_txt + ":", font=("Segoe UI", 10), text_color="#334155", width=160, anchor="w").pack(side="left")
+            ctk.CTkEntry(r, textvariable=var, font=("Segoe UI", 10), width=80, height=28, corner_radius=6).pack(side="left", padx=6)
+            ctk.CTkLabel(r, text=hint, font=("Segoe UI", 9), text_color="#94A3B8").pack(side="left", padx=6)
 
-        fl_row = tk.Frame(af, bg="#F8FAFC")
-        fl_row.pack(fill=tk.X, padx=10, pady=(4, 6))
-        tk.Checkbutton(fl_row, text="Flip vertically for printing (matches image orientation)",
-                       variable=self.flip_var, bg="#F8FAFC", font=("Segoe UI", 8)).pack(anchor="w")
+        fl_row = ctk.CTkFrame(af, fg_color="transparent")
+        fl_row.pack(fill="x", padx=16, pady=(6, 12))
+        ctk.CTkCheckBox(fl_row, text="Flip vertically for printing (matches image orientation)",
+                        variable=self.flip_var, corner_radius=4, fg_color="#2563EB",
+                        text_color="#334155", font=("Segoe UI", 10)).pack(anchor="w")
 
     def _toggle_advanced(self):
         if self.advanced_open.get():
-            self.adv_frame.pack_forget()
+            self.adv_content.pack_forget()
             self.advanced_open.set(False)
-            self.btn_adv_toggle.configure(text="▶ Advanced settings")
+            self.btn_adv_toggle.configure(text="▶  Advanced settings")
         else:
-            self.adv_frame.pack(fill=tk.X, padx=14, pady=4, after=self.btn_adv_toggle.master)
+            self.adv_content.pack(fill="x", padx=0, pady=(0, 8))
             self.advanced_open.set(True)
-            self.btn_adv_toggle.configure(text="▼ Advanced settings")
+            self.btn_adv_toggle.configure(text="▼  Advanced settings")
 
     # --------------------------------------------------------------------------
     # MODE SWITCHING & UI ADAPTATION
     # --------------------------------------------------------------------------
+    def _on_segmented_mode_changed(self, value):
+        mode = "chroma" if "chroma" in value.lower() else "os"
+        self._set_mode(mode)
+
     def _set_mode(self, mode):
         self.mode = mode
         self.cfg["mode"] = mode
         save_settings(self.cfg)
+        self.mode_seg.set("TAMP-OS Chroma" if mode == "chroma" else "TAMP-OS")
         self._update_mode_ui()
         self._refresh_image_table()
         self._update_preview()
 
     def _update_mode_ui(self):
         if self.mode == "os":
-            self.btn_mode_os.configure(bg="#2563EB", fg="#FFFFFF", relief="flat")
-            self.btn_mode_chroma.configure(bg="#0F172A", fg="#94A3B8", relief="flat")
-            self.chroma_frame.pack_forget()
-            self.chroma_container.pack_forget()
+            self.card_chroma.pack_forget()
             self.th_invert_lbl.configure(text="Invert")
             self.lbl_preview_title.configure(text="Relief preview")
             self.lbl_preview_hint.configure(text="Light = raised, dark = low. Check this before generating: if the feature you want to feel is sunk, tick Invert.")
             self.btn_generate.configure(text="Generate print files")
             self.plot_container.pack_forget()
         else:
-            self.btn_mode_os.configure(bg="#0F172A", fg="#94A3B8", relief="flat")
-            self.btn_mode_chroma.configure(bg="#2563EB", fg="#FFFFFF", relief="flat")
-            # Pack chroma frame inside container at top of right column
-            self.chroma_container.pack(fill=tk.X, padx=0, pady=0, before=self.p_hdr)
-            self.chroma_frame.pack(fill=tk.X, padx=14, pady=(12, 6))
+            self.card_chroma.pack(fill="x", pady=(0, 10), before=self.card_printer)
             self.th_invert_lbl.configure(text="Polarity")
             self.lbl_preview_title.configure(text="Live tactile preview")
             self.lbl_preview_hint.configure(text=f"Shaded relief with {self.chroma_texture_var.get()} texture. Grazing light shows how it will feel under the finger.")
             self.btn_generate.configure(text="Generate tactile files")
-            self.plot_container.pack(fill=tk.X, padx=14, pady=(2, 6), before=self.lbl_preview_hint)
+            self.plot_container.pack(fill="x", padx=16, pady=(4, 6), before=self.lbl_preview_hint)
 
-        if hasattr(self, 'r_canvas') and hasattr(self, 'r_inner'):
-            self.r_canvas.yview_moveto(0.0)
-            self.r_inner.update_idletasks()
-            self.r_canvas.configure(scrollregion=self.r_canvas.bbox("all"))
+        if hasattr(self, "r_scroll") and hasattr(self.r_scroll, "_parent_canvas"):
+            self.r_scroll._parent_canvas.yview_moveto(0.0)
 
         self._refresh_texture_buttons()
         self._update_status_summary()
@@ -1175,7 +1223,9 @@ class TAMPGUI:
     # --------------------------------------------------------------------------
     # COLORMAP & TEXTURE SELECTION
     # --------------------------------------------------------------------------
-    def _on_colormap_changed(self, event=None):
+    def _on_colormap_changed(self, choice=None):
+        if choice:
+            self.chroma_colormap_var.set(choice)
         self.cfg["chroma_colormap"] = self.chroma_colormap_var.get()
         save_settings(self.cfg)
         self._redraw_colormap_bar()
@@ -1205,11 +1255,11 @@ class TAMPGUI:
         sel = self.chroma_texture_var.get()
         for tex, widgets in self.tex_buttons.items():
             is_sel = (tex == sel)
-            border_c = "#2563EB" if is_sel else "#CBD5E1"
+            border_c = "#2563EB" if is_sel else "#E2E8F0"
             bg_c = "#EFF6FF" if is_sel else "#FFFFFF"
             fg_c = "#2563EB" if is_sel else "#334155"
-            widgets["frame"].configure(bg=bg_c, highlightbackground=border_c, highlightthickness=2 if is_sel else 1)
-            widgets["label"].configure(bg=bg_c, fg=fg_c)
+            widgets["frame"].configure(fg_color=bg_c, border_color=border_c, border_width=1.5 if is_sel else 1)
+            widgets["label"].configure(text_color=fg_c)
             draw_texture_icon(widgets["canvas"], tex, is_selected=is_sel)
 
     def _on_ramp_slider_move(self, val):
@@ -1228,51 +1278,70 @@ class TAMPGUI:
         self._update_preview()
         self._update_status_summary()
 
-    def _on_printer_profile_changed(self, event=None):
-        prof = self.printer_profile_var.get()
-        profiles = {
-            "Standard FDM / 0.4 mm nozzle": ("0.4", "0.12", "100"),
-            "Fine-detail FDM / 0.2 mm nozzle": ("0.2", "0.08", "80"),
-            "Large-nozzle FDM / 0.6 mm nozzle": ("0.6", "0.20", "120"),
-        }
-        if prof in profiles:
-            nz, ly, sz = profiles[prof]
-            self.nozzle_var.set(nz)
-            self.layer_var.set(ly)
-            self.size_x_var.set(sz)
-            self.lbl_pr_summary.configure(text=f"{nz} mm nozzle · {ly} mm layers · {sz} mm wide")
-        else:
-            self.lbl_pr_summary.configure(text="using values in Advanced settings")
+    def _apply_suggested_preset(self):
+        if self.suggested_overall_preset:
+            self._select_quality_card(self.suggested_overall_preset)
+
+    def _on_printer_profile_changed(self, choice=None):
+        p = choice or self.pr_menu.get()
+        self.printer_profile_var.set(p)
+        self.cfg["printer_profile"] = p
+        save_settings(self.cfg)
+
+        if "0.2 mm" in p:
+            self.nozzle_var.set("0.2")
+            self.layer_var.set("0.08")
+            self.size_x_var.set("80")
+            self.lbl_chip_nozzle.configure(text="0.2 mm nozzle")
+            self.lbl_chip_layer.configure(text="0.08 mm layers")
+            self.lbl_chip_size.configure(text="80 mm wide")
+        elif "0.6 mm" in p:
+            self.nozzle_var.set("0.6")
+            self.layer_var.set("0.20")
+            self.size_x_var.set("150")
+            self.lbl_chip_nozzle.configure(text="0.6 mm nozzle")
+            self.lbl_chip_layer.configure(text="0.20 mm layers")
+            self.lbl_chip_size.configure(text="150 mm wide")
+        elif "Standard" in p or "0.4 mm" in p:
+            self.nozzle_var.set("0.4")
+            self.layer_var.set("0.12")
+            self.size_x_var.set("100")
+            self.lbl_chip_nozzle.configure(text="0.4 mm nozzle")
+            self.lbl_chip_layer.configure(text="0.12 mm layers")
+            self.lbl_chip_size.configure(text="100 mm wide")
+
         self._update_preview()
+        self._update_status_summary()
 
     # --------------------------------------------------------------------------
-    # IMAGE MANAGEMENT & TABLE
+    # IMAGE MANAGEMENT
     # --------------------------------------------------------------------------
     def _add_images_dialog(self):
-        fnames = filedialog.askopenfilenames(
-            title="Select Microscopy / Gradient Images",
-            filetypes=[("Image files", "*.png *.jpg *.jpeg *.tif *.tiff *.bmp *.webp"), ("All files", "*.*")]
-        )
-        if fnames:
-            self._add_image_paths(fnames)
+        filetypes = [
+            ("Image files", "*.png *.jpg *.jpeg *.tif *.tiff *.bmp"),
+            ("All files", "*.*")
+        ]
+        paths = filedialog.askopenfilenames(title="Select microscopy / scientific images", filetypes=filetypes)
+        if paths:
+            self._add_image_paths(paths)
 
     def _load_default_examples_if_available(self):
-        """Pre-populate with example images from examples/ directory if present."""
-        ex_dir = Path(__file__).parent / "examples"
-        if ex_dir.exists():
-            ex_files = []
-            for name in ["SEM_5um_raw.png", "crab_spider.jpg", "input_li_gradient.png"]:
-                p = ex_dir / name
-                if p.exists():
-                    ex_files.append(str(p))
-            if ex_files:
-                self._add_image_paths(ex_files, select_first=True)
+        base_dir = Path(__file__).resolve().parent
+        candidates = [
+            base_dir / "examples" / "SEM_5um_raw.png",
+            base_dir / "examples" / "crab_spider.jpg",
+            base_dir / "examples" / "input_li_gradient.png"
+        ]
+        found = [str(p) for p in candidates if p.exists()]
+        if found:
+            self._add_image_paths(found, select_first=True)
 
     def _add_image_paths(self, paths, select_first=False):
-        existing = {img["path"] for img in self.images_data}
         added_any = False
         for p in paths:
-            if p not in existing and Path(p).exists():
+            if any(img["path"] == p for img in self.images_data):
+                continue
+            if Path(p).exists():
                 try:
                     analysis = analyze_image_quality(p)
                     suggested = recommend_preset_from_analysis(analysis)
@@ -1297,7 +1366,7 @@ class TAMPGUI:
             self._update_status_summary()
 
     def _clear_images(self):
-        self.images_data = []
+        self.images_data.clear()
         self.selected_idx = 0
         self._refresh_image_table()
         self._update_preview()
@@ -1319,108 +1388,143 @@ class TAMPGUI:
             self._update_status_summary()
 
     def _refresh_image_table(self):
-        for w in self.tbl_inner.winfo_children():
+        for w in self.tbl_items_frame.winfo_children():
             w.destroy()
 
         count = len(self.images_data)
         self.lbl_img_count.configure(text=f"{count} image{'s' if count != 1 else ''}")
 
         if not self.images_data:
-            empty_lbl = tk.Label(self.tbl_inner, text="No images loaded. Click '+ Add images…' to get started.",
-                                 font=("Segoe UI", 9), fg="#94A3B8", bg="#FFFFFF")
+            empty_lbl = ctk.CTkLabel(self.tbl_items_frame, text="No images loaded. Click 'Add images…' to get started.",
+                                     font=("Segoe UI", 11), text_color="#94A3B8")
             empty_lbl.pack(pady=20)
             return
 
         for idx, img in enumerate(self.images_data):
             is_sel = (idx == self.selected_idx)
-            row_bg = "#EFF6FF" if is_sel else "#FFFFFF"
+            card_bg = "#EFF6FF" if is_sel else "#FFFFFF"
+            card_border = "#93C5FD" if is_sel else "#E2E8F0"
+            border_w = 1.5 if is_sel else 1
 
-            row = tk.Frame(self.tbl_inner, bg=row_bg, cursor="hand2")
-            row.pack(fill=tk.X, pady=1)
-            row.columnconfigure(0, weight=1)
-            row.columnconfigure(1, minsize=86)
-            row.columnconfigure(2, minsize=80)
-            row.columnconfigure(3, minsize=34)
+            row_card = ctk.CTkFrame(self.tbl_items_frame, corner_radius=8, fg_color=card_bg,
+                                    border_width=border_w, border_color=card_border, height=52)
+            row_card.pack(fill="x", pady=2, padx=2)
 
-            # Name & info label
-            info_txt = f"{img['name']}\n{img['width']} × {img['height']} px · suggested {img['analysis'].get('exposure', '')[:10]}"
-            n_lbl = tk.Label(row, text=info_txt, font=("Segoe UI", 8), fg="#0F172A", bg=row_bg,
-                             anchor="w", justify="left")
-            n_lbl.grid(row=0, column=0, sticky="w", padx=(10, 4), pady=2)
-
-            # Quality Combobox
-            q_var = tk.StringVar(value=img["quality"])
-            cb = ttk.Combobox(row, textvariable=q_var, values=["Low", "Medium", "High"],
-                              state="readonly", width=8)
-            cb.grid(row=0, column=1, padx=4, pady=2)
-
-            def make_q_change(i=idx, v=q_var):
-                def handler(e):
-                    self.images_data[i]["quality"] = v.get()
-                    self._update_preview()
-                    self._update_status_summary()
-                return handler
-
-            cb.bind("<<ComboboxSelected>>", make_q_change())
-
-            # Invert / Polarity button
-            inv_text = ("Inverted" if img["invert"] else "Normal") if self.mode == "chroma" else ("On" if img["invert"] else "Off")
-            inv_btn = tk.Button(row, text=inv_text, font=("Segoe UI", 8),
-                                bg="#EFF6FF" if img["invert"] else "#F1F5F9",
-                                fg="#2563EB" if img["invert"] else "#64748B",
-                                width=8, relief="flat")
-            inv_btn.grid(row=0, column=2, padx=4, pady=2)
-
-            def make_inv_toggle(i=idx, b=inv_btn):
-                def handler():
-                    self.images_data[i]["invert"] = not self.images_data[i]["invert"]
-                    t = ("Inverted" if self.images_data[i]["invert"] else "Normal") if self.mode == "chroma" else ("On" if self.images_data[i]["invert"] else "Off")
-                    b.configure(text=t, bg="#EFF6FF" if self.images_data[i]["invert"] else "#F1F5F9",
-                                fg="#2563EB" if self.images_data[i]["invert"] else "#64748B")
-                    self._update_preview()
-                return handler
-
-            inv_btn.configure(command=make_inv_toggle())
-
-            # Delete single image button (✕)
-            del_btn = tk.Button(row, text="✕", font=("Segoe UI", 9, "bold"),
-                                fg="#94A3B8", activeforeground="#EF4444",
-                                bg=row_bg, activebackground=row_bg,
-                                bd=0, relief="flat", cursor="hand2", padx=4, pady=1,
-                                command=lambda i=idx: self._remove_single_image(i))
-            del_btn.grid(row=0, column=3, padx=2, pady=2)
-
-            # Row click selection
             def make_row_click(i=idx):
-                def handler(e):
+                def handler(e=None):
                     self.selected_idx = i
                     self._refresh_image_table()
                     self._update_preview()
                 return handler
 
-            row.bind("<Button-1>", make_row_click())
-            n_lbl.bind("<Button-1>", make_row_click())
+            # Thumbnail
+            if img["path"] not in self.thumbnail_cache:
+                try:
+                    p_img = Image.open(img["path"]).convert("RGB")
+                    p_img.thumbnail((36, 36))
+                    self.thumbnail_cache[img["path"]] = ctk.CTkImage(light_image=p_img, dark_image=p_img, size=(36, 36))
+                except Exception:
+                    self.thumbnail_cache[img["path"]] = None
 
-        # Update batch suggestion banner
+            thumb = self.thumbnail_cache.get(img["path"])
+            if thumb:
+                t_lbl = ctk.CTkLabel(row_card, text="", image=thumb, width=36, height=36)
+                t_lbl.pack(side="left", padx=(8, 6), pady=6)
+                t_lbl.bind("<Button-1>", make_row_click(idx))
+
+            # Text Block
+            txt_box = ctk.CTkFrame(row_card, fg_color="transparent")
+            txt_box.pack(side="left", fill="both", expand=True, padx=4)
+            txt_box.bind("<Button-1>", make_row_click(idx))
+
+            n_lbl = ctk.CTkLabel(txt_box, text=img["name"], font=("Segoe UI", 11, "bold"), text_color="#0F172A", anchor="w")
+            n_lbl.pack(anchor="w", pady=(4, 0))
+            n_lbl.bind("<Button-1>", make_row_click(idx))
+
+            sub_txt = f"{img['width']} × {img['height']} px · suggested {img['analysis'].get('exposure', '')[:10]}"
+            s_lbl = ctk.CTkLabel(txt_box, text=sub_txt, font=("Segoe UI", 9), text_color="#64748B", anchor="w")
+            s_lbl.pack(anchor="w", pady=(0, 4))
+            s_lbl.bind("<Button-1>", make_row_click(idx))
+
+            # Quality Combobox
+            def make_q_change(i=idx):
+                def handler(choice):
+                    self.images_data[i]["quality"] = choice
+                    self._update_preview()
+                    self._update_status_summary()
+                return handler
+
+            q_cb = ctk.CTkComboBox(row_card, values=["Low", "Medium", "High"], state="readonly", width=82, height=26, corner_radius=6,
+                                   fg_color="#FFFFFF", border_width=1, border_color="#CBD5E1", button_color="#F1F5F9",
+                                   button_hover_color="#E2E8F0", text_color="#0F172A", font=("Segoe UI", 11),
+                                   dropdown_fg_color="#FFFFFF", dropdown_text_color="#0F172A", dropdown_hover_color="#EFF6FF",
+                                   command=make_q_change(idx))
+            q_cb.set(img["quality"])
+            q_cb.pack(side="left", padx=6)
+
+            # Invert / Polarity Checkbox
+            inv_var = tk.BooleanVar(value=img["invert"])
+            inv_txt = ("Inverted" if img["invert"] else "Normal") if self.mode == "chroma" else ("On" if img["invert"] else "Off")
+
+            def make_inv_toggle(i=idx, v=inv_var):
+                def handler():
+                    self.images_data[i]["invert"] = v.get()
+                    self._update_preview()
+                return handler
+
+            inv_chk = ctk.CTkCheckBox(row_card, text=inv_txt, variable=inv_var, width=20, height=20, checkbox_width=18, checkbox_height=18,
+                                      corner_radius=4, fg_color="#2563EB", text_color="#0F172A", font=("Segoe UI", 11),
+                                      command=make_inv_toggle(idx, inv_var))
+            inv_chk.pack(side="left", padx=8)
+
+            # Delete button (✕)
+            del_btn = ctk.CTkButton(row_card, text="✕", width=24, height=24, corner_radius=12,
+                                    fg_color="transparent", text_color="#94A3B8", hover_color="#FEE2E2",
+                                    font=("Segoe UI", 11, "bold"),
+                                    command=lambda i=idx: self._remove_single_image(i))
+            del_btn.pack(side="right", padx=(4, 8))
+
+            row_card.bind("<Button-1>", make_row_click(idx))
+
         self._update_recommendation_banner()
 
     def _update_recommendation_banner(self):
         if not self.images_data:
             self.lbl_suggestion.configure(text="Add images to see resolution guidance.")
+            for name, w in self.q_cards.items():
+                w["frame"].configure(fg_color="#F8FAFC", border_color="#E2E8F0", border_width=1.5)
+                w["badge"].pack_forget()
             return
 
         presets = [img["quality"] for img in self.images_data]
         rec = max(["Low", "Medium", "High"], key=presets.count)
+        self.suggested_overall_preset = rec
         avg_range = sum(img["analysis"]["dynamic_range"] for img in self.images_data) / len(self.images_data)
+
         self.lbl_suggestion.configure(
-            text=f"For these images we suggest {rec} (average contrast {avg_range:.0f}/255). Click to apply."
+            text=f"For these images we suggest {rec} (average contrast {avg_range:.0f}/255)."
         )
+
+        # Update quality card highlights
+        sel_preset = self.selected_preset_var.get()
+        for name, w in self.q_cards.items():
+            is_sel = (name == sel_preset)
+            w["frame"].configure(
+                fg_color="#EFF6FF" if is_sel else "#F8FAFC",
+                border_color="#2563EB" if is_sel else "#E2E8F0",
+                border_width=2 if is_sel else 1.5
+            )
+            if name == rec:
+                w["badge"].pack(side="right")
+            else:
+                w["badge"].pack_forget()
 
     # --------------------------------------------------------------------------
     # LIVE TACTILE PREVIEW & CROSS-SECTION
     # --------------------------------------------------------------------------
     def _update_preview(self):
         if not self.images_data or self.selected_idx >= len(self.images_data):
+            self.lbl_preview_fname.configure(text="")
             self.lbl_preview_image.configure(image="", text="No preview available")
             return
 
@@ -1429,12 +1533,13 @@ class TAMPGUI:
         quality = active["quality"]
         invert = active["invert"]
 
+        self.lbl_preview_fname.configure(text=active["name"])
+
         try:
             sz_x = float(self.size_x_var.get())
         except Exception:
             sz_x = 100.0
 
-        # Determine target resolution
         q_res = {"Low": 128, "Medium": 256, "High": 512}.get(quality, 256)
         if self.res_override_var.get().strip():
             try:
@@ -1445,13 +1550,12 @@ class TAMPGUI:
         aspect = active["height"] / max(1, active["width"])
         sz_y = round(sz_x * aspect, 1)
 
-        # Update preview badges
-        self.lbl_meta_size.configure(text=f"Size: {sz_x:.0f} × {sz_y:.0f} mm")
-        self.lbl_meta_res.configure(text=f"Res: {q_res} px")
+        self.lbl_meta_size.configure(text=f"{sz_x:.0f} × {sz_y:.0f} mm")
+        self.lbl_meta_res.configure(text=f"{q_res} px")
         est_mb = estimate_stl_file_size(q_res, aspect)
-        self.lbl_meta_stl.configure(text=f"Est. STL: ~{format_file_size(est_mb)}")
+        self.lbl_meta_stl.configure(text=f"~{format_file_size(est_mb)}")
 
-        target_cols = min(256, q_res)  # Fast preview resolution
+        target_cols = min(256, q_res)
         target_rows = max(2, int(round(target_cols * aspect)))
 
         try:
@@ -1461,83 +1565,96 @@ class TAMPGUI:
             return
 
         if self.mode == "os":
-            # Grayscale heightmap mode
             gray = raw_img.convert("L").resize((target_cols, target_rows), Image.LANCZOS)
             arr = np.array(gray, dtype=np.float32) / 255.0
             if invert:
                 arr = 1.0 - arr
-            self.lbl_meta_raised.configure(text="Raised: Dark areas" if invert else "Raised: Light areas")
+            self.lbl_meta_raised.configure(text="Dark areas" if invert else "Light areas")
 
-            # Convert to PIL preview
-            arr_u8 = (arr * 255).astype(np.uint8)
-            prev_pil = Image.fromarray(arr_u8).resize((320, int(320 * aspect)), Image.NEAREST)
-            self._display_preview_image(prev_pil)
+            try:
+                blur_s = float(self.blur_var.get())
+                if blur_s > 0.05:
+                    arr = gaussian_filter(arr, sigma=blur_s * (target_cols / 256.0))
+            except Exception:
+                pass
+
+            ls = LightSource(azdeg=315, altdeg=45)
+            shaded = ls.shade(arr, cmap=plt.cm.gray, blend_mode="overlay", vert_exag=1.5)
+            pil_shaded = Image.fromarray((shaded[:, :, :3] * 255).astype(np.uint8))
+            self._display_preview_image(pil_shaded)
 
         else:
-            # Chroma mode: Hillshade + Cross-section
-            self.lbl_meta_raised.configure(text="Raised: Low values" if invert else "Raised: High values")
-            cm_name = self.chroma_colormap_var.get()
-            s = decode_colormap(raw_img.resize((target_cols, target_rows), Image.LANCZOS), cm_name)
-
+            self.lbl_meta_raised.configure(text="High values (ramp)")
+            tex_name = self.chroma_texture_var.get()
+            colormap_name = self.chroma_colormap_var.get()
             ramp_elev = float(self.chroma_ramp_var.get())
-            t_relief = float(self.chroma_relief_var.get())
-            tex_type = self.chroma_texture_var.get()
-            pol_inv = invert or self.chroma_polarity_var.get()
+            tex_relief = float(self.chroma_relief_var.get())
+            polarity_inv = bool(self.chroma_polarity_var.get())
 
-            z_base = float(self.base_thickness_var.get() or 1.2)
-            z_ramp = build_ramp(target_rows, target_cols, (sz_x, sz_y), ramp_elev)
-            z_tex = apply_texture(s, tex_type, (sz_x, sz_y), t_relief, polarity_inverted=pol_inv)
-            Z = z_base + z_ramp + z_tex
+            try:
+                base_thick = float(self.base_thickness_var.get())
+            except Exception:
+                base_thick = 1.2
 
-            # 1. Hillshade rendering
-            ls = LightSource(azdeg=315, altdeg=20)  # Grazing sunlight
-            shaded = ls.shade(Z, cmap=plt.cm.copper, vert_exag=1.8, blend_mode="overlay")
-            shaded_u8 = (shaded[:, :, :3] * 255).astype(np.uint8)
-            hill_pil = Image.fromarray(shaded_u8).resize((320, int(320 * aspect)), Image.BILINEAR)
-            self._display_preview_image(hill_pil)
+            scalar_field = decode_colormap(raw_img, colormap_name=colormap_name)
+            s_resized = Image.fromarray((scalar_field * 255).astype(np.uint8)).resize(
+                (target_cols, target_rows), Image.BILINEAR
+            )
+            s_arr = np.array(s_resized, dtype=np.float32) / 255.0
 
-            # 2. Cross section plot Z(x) in mm
-            self._draw_cross_section_plot(Z, sz_x, z_base)
+            Z_ramp = build_ramp(target_rows, target_cols, (sz_x, sz_y), ramp_elev, direction="horizontal")
+            Z_tex = apply_texture(s_arr, tex_name, (sz_x, sz_y), tex_relief, polarity_inverted=polarity_inv)
+            Z_total = base_thick + Z_ramp + Z_tex
+
+            ls = LightSource(azdeg=315, altdeg=20)
+            shaded = ls.shade(Z_total, cmap=plt.cm.copper, blend_mode="overlay", vert_exag=2.0)
+            pil_shaded = Image.fromarray((shaded[:, :, :3] * 255).astype(np.uint8))
+            self._display_preview_image(pil_shaded)
+            self._draw_cross_section_plot(Z_total, sz_x, base_thick)
 
     def _display_preview_image(self, pil_img):
-        tk_img = ImageTk.PhotoImage(pil_img)
-        self.lbl_preview_image.configure(image=tk_img, text="")
-        self.lbl_preview_image.image = tk_img
+        w, h = pil_img.size
+        max_w, max_h = 280, 210
+        scale = min(max_w / max(1, w), max_h / max(1, h))
+        disp_w = max(1, int(w * scale))
+        disp_h = max(1, int(h * scale))
+        resized = pil_img.resize((disp_w, disp_h), Image.LANCZOS)
+        self.ctk_preview_img = ctk.CTkImage(light_image=resized, dark_image=resized, size=(disp_w, disp_h))
+        self.lbl_preview_image.configure(image=self.ctk_preview_img, text="")
 
     def _draw_cross_section_plot(self, Z, width_mm, z_base):
-        rows, cols = Z.shape
-        mid_row = rows // 2
-        z_slice = Z[mid_row, :]
-        xs = np.linspace(0, width_mm, cols)
+        mid_row = Z.shape[0] // 2
+        profile_z = Z[mid_row, :]
+        x_mm = np.linspace(0, width_mm, len(profile_z))
 
-        fig = plt.Figure(figsize=(4.4, 0.9), dpi=80, facecolor="#FFFFFF")
+        fig = plt.Figure(figsize=(4.8, 1.2), dpi=80, facecolor="#FFFFFF")
         ax = fig.add_subplot(111)
-        fig.subplots_adjust(left=0.14, right=0.96, top=0.88, bottom=0.28)
-
-        ax.plot(xs, z_slice, color="#2563EB", lw=1.5, label="Surface Z(x)")
-        ax.axhline(z_base, color="#94A3B8", ls="--", lw=1.0, label="Base 1.2mm")
+        ax.set_facecolor("#F8FAFC")
+        ax.fill_between(x_mm, 0, profile_z, color="#3B82F6", alpha=0.35)
+        ax.plot(x_mm, profile_z, color="#1D4ED8", lw=1.5, label="Z(x) total")
+        ax.axhline(z_base, color="#94A3B8", linestyle="--", lw=0.8, label=f"Base {z_base:.1f} mm")
+        ax.set_xlim(0, width_mm)
+        ax.set_ylim(0, max(profile_z) * 1.25)
+        ax.set_xlabel("X (mm)", fontsize=7, color="#475569")
         ax.set_ylabel("Z (mm)", fontsize=7, color="#475569")
-        ax.set_xlabel("X width (mm)", fontsize=7, color="#475569")
         ax.tick_params(axis="both", labelsize=6, colors="#64748B")
-        ax.set_ylim(0, max(4.0, float(np.max(Z)) + 0.5))
+        ax.legend(fontsize=6, loc="upper left", framealpha=0.6)
+        fig.tight_layout(pad=0.4)
 
-        for w in self.plot_container.winfo_children():
-            w.destroy()
+        if self.plot_canvas:
+            self.plot_canvas.get_tk_widget().destroy()
 
         self.plot_canvas = FigureCanvasTkAgg(fig, master=self.plot_container)
         self.plot_canvas.draw()
-        self.plot_canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+        self.plot_canvas.get_tk_widget().pack(fill="x", padx=4, pady=2)
 
-    # --------------------------------------------------------------------------
-    # 3D INTERACTIVE VISUALIZATION (PYVISTA)
-    # --------------------------------------------------------------------------
     def _launch_pyvista_3d(self):
         if not PYVISTA_AVAILABLE:
-            messagebox.showwarning("PyVista not installed", "Interactive 3D viewing requires pyvista. Run:\npip install pyvista")
+            messagebox.showwarning("3D View Not Available", "PyVista is not installed or trame backend is missing.")
             return
 
-        if not self.images_data:
-            messagebox.showinfo("No image", "Please load an image first.")
+        if not self.images_data or self.selected_idx >= len(self.images_data):
+            messagebox.showinfo("No Image", "Add and select an image to inspect in 3D.")
             return
 
         active = self.images_data[self.selected_idx]
@@ -1552,64 +1669,73 @@ class TAMPGUI:
 
         q_res = {"Low": 128, "Medium": 256, "High": 512}.get(quality, 256)
         aspect = active["height"] / max(1, active["width"])
-        sz_y = round(sz_x * aspect, 1)
-
+        sz_y = sz_x * aspect
         cols = min(256, q_res)
         rows = max(2, int(round(cols * aspect)))
 
+        raw = Image.open(img_path)
+
+        if self.mode == "os":
+            gray = raw.convert("L").resize((cols, rows), Image.LANCZOS)
+            arr = np.array(gray, dtype=np.float32) / 255.0
+            if invert:
+                arr = 1.0 - arr
+            try:
+                blur_s = float(self.blur_var.get())
+                if blur_s > 0.05:
+                    arr = gaussian_filter(arr, sigma=blur_s * (cols / 256.0))
+            except Exception:
+                pass
+            relief_mm = float(self.relief_var.get())
+            base_thick = float(self.base_thickness_var.get())
+            Z = base_thick + arr * relief_mm
+        else:
+            cm = self.chroma_colormap_var.get()
+            ramp_elev = float(self.chroma_ramp_var.get())
+            tex_name = self.chroma_texture_var.get()
+            tex_relief = float(self.chroma_relief_var.get())
+            pol_inv = bool(self.chroma_polarity_var.get())
+            base_thick = float(self.base_thickness_var.get())
+
+            scalar_field = decode_colormap(raw, colormap_name=cm)
+            s_resized = Image.fromarray((scalar_field * 255).astype(np.uint8)).resize((cols, rows), Image.BILINEAR)
+            s_arr = np.array(s_resized, dtype=np.float32) / 255.0
+
+            Z_ramp = build_ramp(rows, cols, (sz_x, sz_y), ramp_elev, direction="horizontal")
+            Z_tex = apply_texture(s_arr, tex_name, (sz_x, sz_y), tex_relief, polarity_inverted=pol_inv)
+            Z = base_thick + Z_ramp + Z_tex
+
         def run_viewer():
-            raw_img = Image.open(img_path)
-            z_base = float(self.base_thickness_var.get() or 1.2)
-
-            if self.mode == "os":
-                gray = raw_img.convert("L").resize((cols, rows), Image.LANCZOS)
-                arr = np.array(gray, dtype=np.float32) / 255.0
-                if invert:
-                    arr = 1.0 - arr
-                relief_mm = float(self.relief_var.get() or 3.0)
-                Z = z_base + arr * relief_mm
-                title = f"TAMP-OS 3D: {active['name']}"
-            else:
-                s = decode_colormap(raw_img.resize((cols, rows), Image.LANCZOS), self.chroma_colormap_var.get())
-                ramp_elev = float(self.chroma_ramp_var.get())
-                t_relief = float(self.chroma_relief_var.get())
-                tex_type = self.chroma_texture_var.get()
-                pol_inv = invert or self.chroma_polarity_var.get()
-                z_ramp = build_ramp(rows, cols, (sz_x, sz_y), ramp_elev)
-                z_tex = apply_texture(s, tex_type, (sz_x, sz_y), t_relief, polarity_inverted=pol_inv)
-                Z = z_base + z_ramp + z_tex
-                title = f"TAMP-OS Chroma 3D: {active['name']} ({tex_type})"
-
-            xs = np.linspace(0, sz_x, cols)
-            ys = np.linspace(0, sz_y, rows)
-            X, Y = np.meshgrid(xs, ys)
-
-            grid = pv.StructuredGrid(X, Y, Z)
-            grid["Elevation (mm)"] = Z.ravel(order="C")
-
-            p = pv.Plotter(title=title)
-            p.set_background("#0F172A")
-            p.add_mesh(grid, cmap="copper" if self.mode == "chroma" else "viridis",
-                       scalars="Elevation (mm)", show_scalar_bar=True, smooth_shading=True)
-            p.show_grid(color="#475569")
-            p.show()
+            try:
+                x = np.linspace(0, sz_x, cols)
+                y = np.linspace(0, sz_y, rows)
+                xx, yy = np.meshgrid(x, y)
+                grid = pv.StructuredGrid(xx, yy, Z)
+                plotter = pv.Plotter(title=f"TAMP-OS 3D View: {active['name']}")
+                plotter.add_mesh(grid, cmap="copper" if self.mode == "chroma" else "gray", show_edges=False, smooth_shading=True)
+                plotter.show_axes()
+                plotter.show()
+            except Exception as e:
+                print(f"PyVista launch error: {e}")
 
         threading.Thread(target=run_viewer, daemon=True).start()
 
     # --------------------------------------------------------------------------
-    # BATCH GENERATION (BACKGROUND THREAD)
+    # BATCH GENERATION WORKER
     # --------------------------------------------------------------------------
     def _start_generation(self):
         if self.is_generating:
             return
         if not self.images_data:
-            messagebox.showinfo("No images", "Please add at least one image to generate files.")
+            messagebox.showwarning("No Images", "Please add at least one image before generating.")
             return
 
         out_dir = Path(self.output_dir_var.get().strip() or str(Path.home() / "TAMP_output"))
-        out_dir.mkdir(parents=True, exist_ok=True)
-        self.cfg["output_dir"] = str(out_dir)
-        save_settings(self.cfg)
+        try:
+            out_dir.mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            messagebox.showerror("Invalid Output Folder", f"Could not create folder:\n{out_dir}\n\nError: {e}")
+            return
 
         fmts = {
             "stl": self.fmt_stl_var.get(),
@@ -1617,56 +1743,60 @@ class TAMPGUI:
             "glb": self.fmt_glb_var.get(),
         }
         if not any(fmts.values()):
-            messagebox.showwarning("No format selected", "Please select at least one format (.STL, .3MF, .GLB).")
+            messagebox.showwarning("No Formats", "Select at least one output format (.STL, .3MF, or .GLB).")
             return
 
         self.is_generating = True
         self.btn_generate.configure(state="disabled", text="Generating…")
-        self.progress_bar.configure(value=0, maximum=len(self.images_data))
+        self.progress_bar.set(0)
 
         threading.Thread(target=self._generation_worker, args=(out_dir, fmts), daemon=True).start()
 
     def _generation_worker(self, out_dir, fmts):
         total = len(self.images_data)
-        success_count = 0
+        count = 0
 
-        for i, img_info in enumerate(self.images_data):
-            name_stem = Path(img_info["path"]).stem
-            self.root.after(0, lambda n=img_info['name'], idx=i+1: self.status_var.set(f"Processing ({idx}/{total}): {n}…"))
+        for idx, img_info in enumerate(self.images_data):
+            name = img_info["name"]
+            stem = Path(name).stem
+            self.status_var.set(f"Generating {idx+1}/{total}: {name}…")
+            self.progress_bar.set(idx / total)
 
             try:
                 if self.mode == "os":
-                    self._generate_os_item(img_info, out_dir, name_stem, fmts)
+                    self._generate_os_item(img_info, out_dir, stem, fmts)
                 else:
-                    self._generate_chroma_item(img_info, out_dir, name_stem, fmts)
-                success_count += 1
+                    self._generate_chroma_item(img_info, out_dir, stem, fmts)
+                count += 1
             except Exception as e:
-                print(f"Error processing {img_info['name']}: {e}")
+                print(f"Error processing {name}: {e}")
 
-            self.root.after(0, lambda v=i+1: self.progress_bar.configure(value=v))
-
-        self.root.after(0, lambda: self._on_generation_finished(success_count, total, out_dir))
+        self.root.after(0, lambda: self._on_generation_finished(count, total, out_dir))
 
     def _generate_os_item(self, img_info, out_dir, stem, fmts):
+        img_path = img_info["path"]
         quality = img_info["quality"]
-        res = {"Low": 128, "Medium": 256, "High": 512}.get(quality, 256)
-        if self.res_override_var.get().strip():
-            try:
-                res = int(self.res_override_var.get().strip())
-            except Exception:
-                pass
+        invert = img_info["invert"]
 
         try:
             sz_x = float(self.size_x_var.get())
         except Exception:
             sz_x = 100.0
 
+        q_res = {"Low": 128, "Medium": 256, "High": 512}.get(quality, 256)
+        if self.res_override_var.get().strip():
+            try:
+                q_res = int(self.res_override_var.get().strip())
+            except Exception:
+                pass
+
         aspect = img_info["height"] / max(1, img_info["width"])
         sz_y = round(sz_x * aspect, 1)
+        cols = q_res
+        rows = max(2, int(round(cols * aspect)))
 
-        raw = Image.open(img_info["path"]).convert("L")
-        target_rows = max(2, int(round(res * aspect)))
-        resized = raw.resize((res, target_rows), Image.LANCZOS)
+        raw = Image.open(img_path).convert("L")
+        resized = raw.resize((cols, rows), Image.LANCZOS)
         arr = np.array(resized, dtype=np.float32)
 
         # Contrast stretch
@@ -1678,7 +1808,7 @@ class TAMPGUI:
         if blur_s > 0:
             arr = gaussian_filter(arr, sigma=blur_s)
 
-        if img_info["invert"]:
+        if invert:
             arr = 1.0 - arr
 
         if self.flip_var.get():
@@ -1687,69 +1817,74 @@ class TAMPGUI:
         base_th = float(self.base_thickness_var.get() or 1.2)
         relief = float(self.relief_var.get() or 3.0)
 
-        stl_path = out_dir / f"{stem}_TAMP_OS_{quality}.stl"
+        stl_name = f"{stem}_TAMP_OS_{quality}.stl"
+        stl_path = out_dir / stl_name
         heightmap_to_stl(arr, stl_path, base_thickness_mm=base_th, max_relief_mm=relief,
                          physical_size_mm=(sz_x, sz_y))
+
         convert_stl(stl_path, fmts)
 
     def _generate_chroma_item(self, img_info, out_dir, stem, fmts):
+        img_path = img_info["path"]
         quality = img_info["quality"]
-        res = {"Low": 128, "Medium": 256, "High": 512}.get(quality, 256)
-        if self.res_override_var.get().strip():
-            try:
-                res = int(self.res_override_var.get().strip())
-            except Exception:
-                pass
+        polarity_inv = bool(img_info["invert"] or self.chroma_polarity_var.get())
+
+        cm = self.chroma_colormap_var.get()
+        ramp_elev = float(self.chroma_ramp_var.get())
+        tex_name = self.chroma_texture_var.get()
+        tex_relief = float(self.chroma_relief_var.get())
+        base_thick = float(self.base_thickness_var.get() or 1.2)
 
         try:
             sz_x = float(self.size_x_var.get())
         except Exception:
             sz_x = 100.0
 
+        q_res = {"Low": 128, "Medium": 256, "High": 512}.get(quality, 256)
         aspect = img_info["height"] / max(1, img_info["width"])
         sz_y = round(sz_x * aspect, 1)
-        target_rows = max(2, int(round(res * aspect)))
+        cols = q_res
+        rows = max(2, int(round(cols * aspect)))
 
-        raw = Image.open(img_info["path"]).resize((res, target_rows), Image.LANCZOS)
-        cm_name = self.chroma_colormap_var.get()
-        s = decode_colormap(raw, cm_name)
+        raw = Image.open(img_path)
+        scalar_field = decode_colormap(raw, colormap_name=cm)
+        s_resized = Image.fromarray((scalar_field * 255).astype(np.uint8)).resize((cols, rows), Image.BILINEAR)
+        s_arr = np.array(s_resized, dtype=np.float32) / 255.0
 
-        pol_inv = img_info["invert"] or self.chroma_polarity_var.get()
-        ramp_elev = float(self.chroma_ramp_var.get())
-        t_relief = float(self.chroma_relief_var.get())
-        tex_type = self.chroma_texture_var.get()
-        base_th = float(self.base_thickness_var.get() or 1.2)
-
-        z_ramp = build_ramp(target_rows, res, (sz_x, sz_y), ramp_elev)
-        z_tex = apply_texture(s, tex_type, (sz_x, sz_y), t_relief, polarity_inverted=pol_inv)
-        Z = base_th + z_ramp + z_tex
+        Z_ramp = build_ramp(rows, cols, (sz_x, sz_y), ramp_elev, direction="horizontal")
+        Z_tex = apply_texture(s_arr, tex_name, (sz_x, sz_y), tex_relief, polarity_inverted=polarity_inv)
+        Z_total = base_thick + Z_ramp + Z_tex
 
         if self.flip_var.get():
-            Z = np.flipud(Z)
+            Z_total = np.flipud(Z_total)
 
-        stl_path = out_dir / f"{stem}_Chroma_{tex_type}_{quality}.stl"
-        surface_z_to_stl(Z, stl_path, physical_size_mm=(sz_x, sz_y))
+        stl_name = f"{stem}_Chroma_{tex_name}_{quality}.stl"
+        stl_path = out_dir / stl_name
+
+        surface_z_to_stl(Z_total, stl_path, physical_size_mm=(sz_x, sz_y))
         convert_stl(stl_path, fmts)
 
     def _on_generation_finished(self, count, total, out_dir):
         self.is_generating = False
-        btn_txt = "Generate tactile files" if self.mode == "chroma" else "Generate print files"
-        self.btn_generate.configure(state="normal", text=btn_txt)
-        self.status_var.set(f"Finished: {count}/{total} files generated in {out_dir.name}")
-        messagebox.showinfo("Generation Complete", f"Successfully generated tactile 3D models for {count} of {total} images!\nSaved to: {out_dir}")
+        self.progress_bar.set(1.0)
+        self.btn_generate.configure(state="normal", text="Generate print files" if self.mode == "os" else "Generate tactile files")
+        self.status_var.set(f"Done! {count}/{total} files generated in {out_dir.name}")
+        messagebox.showinfo("Generation Complete", f"Successfully generated {count}/{total} models in:\n{out_dir}")
 
     def _open_output_folder(self):
-        folder = Path(self.output_dir_var.get().strip() or str(Path.home() / "TAMP_output"))
-        folder.mkdir(parents=True, exist_ok=True)
-        if sys.platform == "win32":
-            os.startfile(str(folder))
-        elif sys.platform == "darwin":
-            os.system(f"open '{folder}'")
+        out_dir = Path(self.output_dir_var.get().strip())
+        out_dir.mkdir(parents=True, exist_ok=True)
+        if sys.platform.startswith("win"):
+            os.startfile(out_dir)
+        elif sys.platform.startswith("darwin"):
+            import subprocess
+            subprocess.Popen(["open", str(out_dir)])
         else:
-            os.system(f"xdg-open '{folder}'")
+            import subprocess
+            subprocess.Popen(["xdg-open", str(out_dir)])
 
     def _browse_output_dir(self):
-        d = filedialog.askdirectory(title="Select Output Directory", initialdir=self.output_dir_var.get())
+        d = filedialog.askdirectory(title="Select Output Folder", initialdir=self.output_dir_var.get())
         if d:
             self.output_dir_var.set(d)
             self.cfg["output_dir"] = d
@@ -1757,12 +1892,19 @@ class TAMPGUI:
 
     def _update_status_summary(self):
         count = len(self.images_data)
-        fmts = [f for f, v in [(".STL", self.fmt_stl_var.get()), (".3MF", self.fmt_3mf_var.get()), (".GLB", self.fmt_glb_var.get())] if v]
-        fmt_count = len(fmts) or 1
-        est_tot_mb = sum(estimate_stl_file_size(
-            {"Low": 128, "Medium": 256, "High": 512}.get(img["quality"], 256),
-            img["height"] / max(1, img["width"])
-        ) for img in self.images_data) if self.images_data else 0.0
+        fmt_count = sum([self.fmt_stl_var.get(), self.fmt_3mf_var.get(), self.fmt_glb_var.get()])
+
+        try:
+            sz_x = float(self.size_x_var.get())
+        except Exception:
+            sz_x = 100.0
+
+        est_tot_mb = sum(
+            estimate_stl_file_size(
+                {"Low": 128, "Medium": 256, "High": 512}.get(img["quality"], 256),
+                img["height"] / max(1, img["width"])
+            ) for img in self.images_data
+        ) if self.images_data else 0.0
 
         self.status_var.set(f"Ready · {count} image{'s' if count != 1 else ''} · {fmt_count} format{'s' if fmt_count != 1 else ''} · ≈ {format_file_size(est_tot_mb)} of STL")
 
@@ -1792,10 +1934,9 @@ class TAMPGUI:
 # ==============================================================================
 
 def main():
-    root = tk.Tk()
-    # Set default app styling
-    root.tk_setPalette(background="#F8FAFC", foreground="#0F172A",
-                       activeBackground="#E2E8F0", activeForeground="#0F172A")
+    ctk.set_appearance_mode("light")
+    ctk.set_default_color_theme("blue")
+    root = ctk.CTk()
     app = TAMPGUI(root)
     root.mainloop()
 

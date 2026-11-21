@@ -24,3 +24,8 @@ matplotlib>=3.7
 # --- Required by pyvista_image-generator.ipynb (3D renders of comparison STLs) ---
 pyvista>=0.43
 trame>=3.0
+
+# --- GUI Framework ---
+customtkinter>=6.0.0
+
+
