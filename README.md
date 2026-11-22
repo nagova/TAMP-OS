@@ -168,37 +168,96 @@ Cada textura de la biblioteca fue diseñada específicamente respetando la resol
 ## 3. Cómo funciona
 
 <details>
-<summary><b>▶ Haz clic para desplegar: Fundamento Científico y Matemático (cKDTree, Arquitectura Háptica y Fisiología FDM)</b></summary>
+<summary><b>▶ Haz clic para desplegar: Fundamento Científico y Matemático (TAMP-OS General y TAMP-OS Chroma)</b></summary>
 
-### El Problema Científico: ¿Por qué fallan las litografías clásicas con el color?
+TAMP-OS v2 integra dos motores computacionales complementarios según la naturaleza de la información científica de entrada: el **Motor General TAMP-OS** (para micrografías e intensidades en escala de grises) y el **Motor TAMP-OS Chroma** (para gradientes continuos de concentración y mapas de color multicanal). Ambos motores convergen en una fase compartida de síntesis de malla tridimensional estanca (*watertight*) calibrada para la fisiología táctil y la cinemática de manufactura aditiva.
 
-Las litografías táctiles convencionales convierten la imagen a escala de grises calculando la luminancia estándar:
+```
+                  ┌─────────────────────────────────────────────────────────────┐
+                  │                 IMAGEN CIENTÍFICA DE ENTRADA                │
+                  └──────────────────────────────┬──────────────────────────────┘
+                                                 │
+                   ┌─────────────────────────────┴─────────────────────────────┐
+                   ▼                                                           ▼
+     [Topografía o Intensidad Monocanal]                        [Gradientes Continuos / Color]
+       SEM, TEM, AFM, fluorescencia,                               Mapas químicos, difusión,
+       luz visible, radiografías.                                 temperatura, paletas espectrales.
+                   │                                                           │
+        ┌──────────┴──────────┐                                     ┌──────────┴──────────┐
+        │   MOTOR GENERAL     │                                     │     MOTOR CHROMA    │
+        │ • Análisis de imagen│                                     │ • Decodificación    │
+        │ • Estiramiento 2-98%│                                     │   cKDTree O(log N)  │
+        │ • Filtro Gaussiano  │                                     │ • Rampa cinestésica │
+        │ • Mapeo Directo Z   │                                     │ • Textura cutánea   │
+        └──────────┬──────────┘                                     └──────────┬──────────┘
+                   │                                                           │
+                   └─────────────────────────────┬─────────────────────────────┘
+                                                 ▼
+                                ┌─────────────────────────────────┐
+                                │   SÍNTESIS DE MALLA 2-MANIFOLD  │
+                                │   • Superficie topográfica      │
+                                │   • Plano base inferior Z = 0   │
+                                │   • 4 Paredes perimetrales      │
+                                └────────────────┬────────────────┘
+                                                 │
+                                                 ▼
+                                ┌─────────────────────────────────┐
+                                │   EXPORTACIÓN (.STL, .3MF, .GLB)│
+                                └─────────────────────────────────┘
+```
+
+---
+
+### A. Motor General TAMP-OS: Litografías Topográficas en Escala de Grises
+
+El motor clásico está concebido para micrografías donde la intensidad de gris del sensor codifica directamente la elevación física, densidad electrónica o luminancia de emisión (SEM, TEM, AFM, fluorescencia monocanal, microscopía de campo claro).
+
+#### 1. Análisis Estadístico y Sincronización Boquilla-Píxel
+Antes de transformar la imagen, el sistema evalúa sus propiedades matemáticas para optimizar el mallado:
+- **Rango dinámico efectivo:** Intervalo percentil $p_{95} - p_{5}$.
+- **Saturación de extremos:** Proporción de píxeles recortados en sombras $(\le 3)$ o luces quemadas $(\ge 252)$.
+- **Densidad de bordes finos:** Cuantificación del gradiente espacial medio $\|\nabla I(x,y)\| = \sqrt{(\partial I/\partial x)^2 + (\partial I/\partial y)^2}$.
+- **Sincronización con la boquilla física de impresión:** A partir del ancho físico de la boquilla $d_{\text{nozzle}}$ (típicamente 0.4 mm) y la dimensión física seleccionada para la pieza $W$ (ej. 100 mm), el algoritmo calcula la cuadrícula ideal de muestreo:
+  $$N_{\text{px}} = \text{snap}_2\left(\frac{W}{d_{\text{nozzle}}}\right)$$
+  Esto ajusta la resolución de la malla (128, 256 o 512 puntos) de modo que cada vértice corresponda a una traza física real del filamento, evitando mallas astronómicas que la impresora no puede resolver físicamente.
+
+#### 2. Pipeline de Acondicionamiento de Señal
+1. **Extracción de luminancia:** Conversión del canal monócromo $I(x,y) \in [0, 255]$.
+2. **Re-muestreo con interpolación Lanczos:** Ajuste de resolución espacial conservando la nitidez de bordes celulares o cristalinos.
+3. **Estiramiento de contraste robusto (Contrast Stretch):** Normalización de la imagen entre los percentiles $2\%$ y $98\%$:
+   $$I_{\text{norm}}(x,y) = \text{clip}\left(\frac{I(x,y) - I_{2\%}}{I_{98\%} - I_{2\%} + \epsilon}, \; 0.0, \; 1.0\right)$$
+   Este paso descarta el ruido aislado de fondo o píxeles parásitos y distribuye toda la señal útil en el rango dinámico táctil completo $[0, 1]$.
+4. **Filtrado Gaussiano de suavizado ($\sigma$):** Convolución bidimensional con núcleo gaussiano para atenuar el ruido de disparo (*shot noise*) característico de detectores SEM:
+   $$I_{\text{suave}}(x,y) = I_{\text{norm}} * G_\sigma(x,y), \quad G_\sigma(u,v) = \frac{1}{2\pi\sigma^2}\exp\left(-\frac{u^2+v^2}{2\sigma^2}\right)$$
+5. **Inversión de polaridad opcional:** En muestras como TEM o tinciones biológicas donde las estructuras de mayor interés son oscuras sobre fondo claro, se invierte la señal:
+   $$I_{\text{final}}(x,y) = 1.0 - I_{\text{suave}}(x,y)$$
+
+#### 3. Mapeo Directo a Altura Física
+Cada píxel normalizado se traslada directamente a una cota milimétrica vertical $Z$:
+$$Z(x,y) = Z_{\text{base}} + I_{\text{final}}(x,y) \cdot h_{\text{relieve}}$$
+donde $Z_{\text{base}}$ (típicamente 1.2 mm) forma un zócalo sólido que previene el alabeo térmico (*warping*), y $h_{\text{relieve}}$ (1.0–5.0 mm) aporta el contraste táctil suficiente para ser discriminado por la sensibilidad táctil humana.
+
+---
+
+### B. Motor TAMP-OS Chroma: Decodificación Cromática y Modulación Háptica
+
+#### El Problema Científico: ¿Por qué fallan las litografías clásicas con el color?
+Las litografías convencionales convierten la imagen calculando la luminancia estándar de pantalla:
 $$L = 0.299\,R + 0.587\,G + 0.114\,B$$
 
-En imágenes científicas con mapas de color continuos (como `Inferno`, `Viridis` o `Jet`), **la luminancia no es monótona**. Colores con significado físico radicalmente opuesto pueden tener exactamente la misma luminancia (por ejemplo, un rojo saturado y un azul oscuro pueden producir idéntico tono de gris). Como consecuencia:
-1. Una litografía plana colapsa zonas de alto valor científico en depresiones falsas.
-2. Un gradiente continuo se percibe simplemente como una "rampa aburrida" sin información sobre la textura o saturación del fenómeno medido.
+En mapas de color continuos (como `Inferno`, `Viridis` o `Turbo`), **la luminancia no es monótona**. Colores con significado físico opuesto (como un púrpura de baja concentración y un rojo saturado) pueden compartir idéntico valor de luminancia, colapsando zonas críticas en depresiones táctiles engañosas.
 
----
-
-### 1. Decodificación Geométrica por Árbol KD (`cKDTree`)
-
-Para recuperar el valor físico escalar exacto $s \in [0, 1]$ de cada píxel $(x, y)$, TAMP-OS Chroma no calcula luminancias arbitrarias. En su lugar, proyecta cada píxel RGB en una tabla de correspondencia (LUT) calibrada de 256 puntos tridimensionales:
-
+#### 1. Decodificación Geométrica por Árbol KD (`cKDTree`)
+Para recuperar el valor físico escalar exacto $s \in [0, 1]$ de cada píxel $(x, y)$, TAMP-OS Chroma proyecta cada tupla RGB en una tabla de correspondencia (LUT) calibrada de 256 puntos tridimensionales:
 $$\mathbf{LUT}_k = \big(R_k, G_k, B_k\big), \quad k \in [0, 255]$$
 
-Utilizando el árbol espacial optimizado `scipy.spatial.cKDTree`, cada píxel $\mathbf{C}(x, y) = (R, G, B)$ se empareja en tiempo $\mathcal{O}(\log N)$ con su color más cercano en el mapa de color:
-
+Utilizando el árbol espacial optimizado `scipy.spatial.cKDTree`, cada píxel $\mathbf{C}(x, y) = (R, G, B)$ se empareja en tiempo logarítmico $\mathcal{O}(\log N)$ con su centroide más próximo en el mapa de color:
 $$s(x,y) = \frac{1}{255} \arg\min_{k} \|\mathbf{C}(x,y) - \mathbf{LUT}_k\|_2$$
 
-Esto garantiza una fidelidad cromática absoluta independientemente de la saturación o el contraste de la pantalla. Para imágenes con paletas multicanal no estándar, se aplica una descomposición en valores singulares (SVD) sobre la nube de dispersión cromática para extraer el eje de mayor varianza física.
+Para imágenes con paletas multicanal no estándar, se aplica una descomposición en valores singulares (SVD) sobre la nube cromática para extraer el eje de mayor varianza física.
 
----
-
-### 2. Codificación Háptica de Doble Escala (Dual-Scale Haptic Architecture)
-
-La superficie final imprimible se compone de tres estratos aditivos:
-
+#### 2. Codificación Háptica de Doble Escala (Dual-Scale Haptic Architecture)
+La superficie táctil resultante combina tres estratos aditivos:
 $$Z_{\text{total}}(x,y) = Z_{\text{base}} + Z_{\text{rampa}}(x,y) + Z_{\text{textura}}(x,y)$$
 
 ```
@@ -214,18 +273,22 @@ $$Z_{\text{total}}(x,y) = Z_{\text{base}} + Z_{\text{rampa}}(x,y) + Z_{\text{tex
 └────────────────────────► X (mm)
 ```
 
-#### A. Componente Cinestésico Macro ($Z_{\text{rampa}}$)
-La mano humana tiene mecanorreceptores propioceptivos en tendones y articulaciones de la muñeca y dedos capaces de percibir inclinaciones gruesas ($> 0.5\text{ mm}$ en tramos de $50\text{ mm}$). La rampa linear:
-$$Z_{\text{rampa}}(x,y) = x \cdot \left(\frac{\Delta Z_{\text{rampa}}}{W}\right)$$
-permite al usuario orientar la muestra de inmediato con la palma de la mano antes de iniciar el escaneo fino con los dedos.
-
-#### B. Componente Cutáneo Micro ($Z_{\text{textura}}$)
-Al mover la yema del dedo sobre la superficie, los mecanorreceptores de adaptación lenta **Merkel (SA-I)** decodifican la forma estática y el relieve de los puntos o celdas, mientras que los corpúsculos de **Meissner (FA-I)** detectan la vibración transitoria producida por la fricción contra las ranuras y estrías:
-$$Z_{\text{textura}}(x,y) = \mathcal{T}_{\text{patrón}}(x,y) \cdot s(x,y) \cdot h_{\text{relieve}}$$
+- **Componente Cinestésico Macro ($Z_{\text{rampa}}$):** Inclinación global lineal $Z_{\text{rampa}}(x,y) = x \cdot (\Delta Z_{\text{rampa}} / W)$ que orienta inmediatamente la palma y muñeca del usuario en la dirección del gradiente térmico o químico.
+- **Componente Cutáneo Micro ($Z_{\text{textura}}$):** Modulación de relieve $Z_{\text{textura}}(x,y) = \mathcal{T}_{\text{patrón}}(x,y) \cdot s(x,y) \cdot h_{\text{relieve}}$ percibida por los mecanorreceptores de la yema del dedo (puntos, estrías, panal, etc.).
 
 ---
 
-### 3. Fisiología Táctil y Parámetros de Manufactura FDM
+### C. Síntesis Geométrica de Mallas Estancas (Watertight 2-Manifold Mesh)
+
+Tanto el motor General como Chroma finalizan en el mismo generador geométrico vectorial para asegurar que el modelo sea 100% imprimible y libre de errores topológicos:
+1. **Malla Topográfica Superior:** Discretización en celdas cuadrangulares con pasos métricos $\Delta x = W / (cols - 1)$ y $\Delta y = H / (rows - 1)$. Cada cuadrante se triangula con dos caras orientadas con normales hacia el exterior (+Z).
+2. **Plano Base Inferior en $Z = 0$:** Fondo perfectamente plano con normales hacia el interior (-Z), asegurando máxima adhesión a la placa de impresión.
+3. **Paredes Perimetrales Verticales (Side Walls):** Se cierran los cuatro laterales ($x=0$, $x=W$, $y=0$, $y=H$) cosiendo la cota variable $Z(x,y)$ con la cota base $Z=0$.
+El sólido resultante contiene exactamente $(rows-1)(cols-1)\times 4 + 4(rows+cols-2)$ triángulos, garantizando un archivo `.STL` o `.3MF` hermético (*watertight / solid manifold*) sin orificios ni aristas no conformes.
+
+---
+
+### D. Fisiología Táctil y Parámetros de Manufactura FDM
 
 | Variable de Diseño | Valor Recomendado | Justificación Fisiológica y de Manufactura |
 | :--- | :--- | :--- |
