@@ -1,470 +1,470 @@
 # TAMP-OS v2: Tactile Microscopy & Scientific Image Printing
 > **Microscopy & Spectral Images to Accessible Tactile 3D Prints**  
-> *De micrografías y gradientes espectrales a modelos táctiles tridimensionales accesibles.*
+> *Transforming scientific micrographs and continuous spectral gradients into accessible tactile 3D models.*
 
 ![TAMP-OS Header](assets/tamp_os_header.png)
 
 ---
 
-### Navegación Rápida
-- [**1. Cómo lanzar (Ejecutable .exe o Python)**](#1-cómo-lanzar)
-- [**2. Guía de usuario (Paso a Paso, Parámetros y Texturas)**](#2-guía-de-usuario)
-- [**3. Cómo funciona (Fundamento Científico y Matemático)**](#3-cómo-funciona)
-- [**4. Formatos de Exportación Compatibles**](#4-formatos-de-exportación-compatibles)
-- [**5. Galería de Ejemplos Comparativos**](#5-galería-de-ejemplos-comparativos)
-- [**Repositorio Histórico (Archive)**](#repositorio-histórico-archive)
-- [**Licencia**](#licencia)
+### Quick Navigation
+- [**1. Quick Start & Launch**](#1-quick-start--launch)
+- [**2. User Guide**](#2-user-guide)
+- [**3. How It Works (Scientific & Mathematical Principles)**](#3-how-it-works)
+- [**4. Supported 3D Export Formats**](#4-supported-3d-export-formats)
+- [**5. Comparative Examples Gallery**](#5-comparative-examples-gallery)
+- [**Historical Archive**](#historical-archive)
+- [**License**](#license)
 
 ---
 
-## 1. Cómo lanzar
+## 1. Quick Start & Launch
 
 <details>
-<summary><b>▶ Haz clic para desplegar: Ejecutable .exe autónomo, Requisitos y Ejecución desde Python</b></summary>
+<summary><b>Click to expand: Standalone .exe Executable, System Requirements, and Python Launch</b></summary>
 
-TAMP-OS v2 integra en una sola aplicación de escritorio autónoma (`tamp_os_gui.py` / `TAMP-OS.exe`) tanto el flujo clásico de litografías en escala de grises como la nueva tecnología **TAMP-OS Chroma** para gradientes y mapas de color multicanal.
-
----
-
-### Opción A: Ejecutable Autónomo para Windows (`.exe` — Recomendado para usuarios generales)
-
-Al estilo de herramientas científicas clásicas como *ImageJ* o *Fiji*, TAMP-OS se puede ejecutar como una aplicación independiente portable:
-- **Sin necesidad de instalar Python**, librerías ni configurar la terminal.
-- Empaquetado con todas sus dependencias científicas (`numpy`, `scipy`, `matplotlib`, `pillow`, `customtkinter`, `numpy-stl`).
-
-#### Cómo obtenerlo y ejecutarlo:
-1. Ve a la sección de [Releases de GitHub](https://github.com/nagova/TAMP-OS/releases) (o descárgalo desde la carpeta `dist/TAMP-OS/` del repositorio).
-2. Descarga y extrae el paquete comprimido `TAMP-OS.zip`.
-3. Haz doble clic en **`TAMP-OS.exe`** para abrir la interfaz de escritorio de inmediato.
+TAMP-OS v2 integrates both the classic grayscale lithophane workflow and the novel **TAMP-OS Chroma** technology for continuous gradients and multichannel colormaps into a single, standalone desktop application (`tamp_os_gui.py` / `TAMP-OS.exe`).
 
 ---
 
-### Opción B: Ejecución desde Código Fuente (Multiplataforma: Windows, Linux, macOS)
+### Option A: Standalone Windows Executable (`.exe` — Recommended for General Users)
 
-Si utilizas Linux, macOS o prefieres ejecutar y personalizar el código fuente en Python:
+Similar to classic scientific tools like *ImageJ* or *Fiji*, TAMP-OS is available as a portable, self-contained desktop package:
+- **No Python installation required**, no dependencies to configure, and no terminal setup.
+- Bundled with all scientific computing dependencies (`numpy`, `scipy`, `matplotlib`, `pillow`, `customtkinter`, `numpy-stl`).
 
-#### Requisitos del Sistema
-- **Python:** 3.9 o superior (probado en Windows 10/11, Ubuntu/Debian y macOS).
-- **Impresora 3D:** Cualquier impresora FDM convencional (boquilla de 0.4 mm o 0.2 mm) o de resina (SLA).
+#### Instructions:
+1. Navigate to the [GitHub Releases](https://github.com/nagova/TAMP-OS/releases) section (or find it in the repository's `dist/TAMP-OS/` folder).
+2. Download and extract the `TAMP-OS.zip` archive.
+3. Double-click **`TAMP-OS.exe`** to launch the modern desktop GUI immediately.
 
-#### Instalación y Ejecución:
+---
 
-1. **Clonar el repositorio:**
+### Option B: Run from Source (Cross-Platform: Windows, Linux, macOS)
+
+If you are a developer, work on Linux/macOS, or wish to customize the Python codebase:
+
+#### System Requirements
+- **Python:** 3.9 or higher (tested on Windows 10/11, Ubuntu/Debian, and macOS).
+- **3D Printer:** Any standard FDM printer (0.4 mm or 0.2 mm nozzle) or resin (SLA) printer.
+
+#### Installation & Execution:
+
+1. **Clone the repository:**
    ```bash
    git clone https://github.com/nagova/TAMP-OS.git
    cd TAMP-OS
    ```
 
-2. **Instalar dependencias:**
+2. **Install dependencies:**
    ```bash
    pip install -r requirements.txt
    ```
-   *(Incluye `numpy`, `pillow`, `scipy`, `numpy-stl`, `matplotlib`, `customtkinter` y `pyvista`)*.
+   *(Includes `numpy`, `pillow`, `scipy`, `numpy-stl`, `matplotlib`, `customtkinter`, and `pyvista`)*.
 
-3. **Lanzar la aplicación:**
+3. **Launch the application:**
    ```bash
    python tamp_os_gui.py
    ```
 
 ---
 
-### Conmutador de Modo (Segmented Control)
-En la barra superior de la aplicación puedes alternar instantáneamente entre los dos motores con un solo clic:
-- **`TAMP-OS`**: Para micrografías tradicionales (SEM, TEM, fluorescencia, luz visible). Traduce los tonos de gris directamente a relieve superficial.
-- **`TAMP-OS Chroma`**: Para imágenes con gradientes de concentración continua, mapas de temperatura o datos espectrales (ej. difusión de Li en electrodos, mapas Raman, espectrometría de masas). Combina una rampa de elevación cinestésica con modulación de microtextura háptica.
+### Mode Switcher (Segmented Control)
+In the top navigation bar, seamlessly toggle between both computational engines with a single click:
+- **`TAMP-OS`**: For traditional micrographs (SEM, TEM, single-channel fluorescence, visible light). Directly maps grayscale pixel luminance to physical surface relief.
+- **`TAMP-OS Chroma`**: For images displaying continuous physical gradients, temperature maps, or spectral datasets (e.g., Li diffusion in battery electrodes, Raman maps, mass spectrometry). Combines a macroscopic kinesthetic elevation ramp with modulated cutaneous microtexture.
 
 > [!NOTE]
-> **Persistencia:** Al cambiar de modo, **nunca se borra la lista de imágenes cargadas**. Además, la aplicación recuerda tu último modo seleccionado y tu carpeta de salida en `~/.tamp_settings.json`.
+> **State Persistence:** Switching modes **never clears your loaded image queue**. Additionally, your active mode and chosen output directory are automatically saved across sessions in `~/.tamp_settings.json`.
 
 </details>
 
 ---
 
-## 2. Guía de usuario
+## 2. User Guide
 
 <details>
-<summary><b>▶ Haz clic para desplegar: Flujo Paso a Paso, ¿Cuándo usar cada modo?, Matriz de Parámetros y Catálogo de Texturas</b></summary>
+<summary><b>Click to expand: Step-by-Step Workflow, Mode Selection, Parameter Matrix & Texture Catalog</b></summary>
 
-### Flujo de Trabajo Paso a Paso (Step-by-Step Guide)
+### Step-by-Step Workflow Guide
 
-Sigue esta guía secuencial para transformar tus imágenes científicas en modelos 3D táctiles óptimos:
+Follow this sequential workflow to turn your scientific images into high-fidelity tactile 3D prints:
 
 ```
 ┌─────────────────────────┐     ┌─────────────────────────┐     ┌─────────────────────────┐
-│         PASO 0          │ ──► │         PASO 1          │ ──► │         PASO 2          │
-│  Preparación de Imagen  │     │   Cargar en TAMP-OS     │     │    Seleccionar Modo     │
-│ (Recortar textos/escalas│     │ (Análisis automático de │     │ (TAMP-OS Clásico vs.    │
-│  y seleccionar ROI)     │     │  resolución y calidad)  │     │  TAMP-OS Chroma)        │
+│         STEP 0          │ ──► │         STEP 1          │ ──► │         STEP 2          │
+│    Image Preparation    │     │      Load in TAMP-OS    │     │       Select Mode       │
+│ (Crop text/scale bars   │     │ (Automatic resolution   │     │ (Classic TAMP-OS vs.    │
+│  and define target ROI) │     │  & dynamic range check) │     │  TAMP-OS Chroma)        │
 └─────────────────────────┘     └─────────────────────────┘     └─────────────────────────┘
                                                                              │
 ┌─────────────────────────┐     ┌─────────────────────────┐                  ▼
-│         PASO 5          │ ◄── │         PASO 4          │ ◄── ┌─────────────────────────┐
-│ Exportar & Slicing FDM  │     │  Inspección en Vivo     │     │         PASO 3          │
-│ (.STL / .3MF / .GLB     │     │ (Hillshade y corte      │     │  Ajustar Parámetros     │
-│  e imprimir a 0.12 mm)  │     │  transversal Z(x))      │     │ (Relieve, Rampa, Patrón)│
+│         STEP 5          │ ◄── │         STEP 4          │ ◄── ┌─────────────────────────┐
+│   Export & Slicing FDM  │     │   Live Tactile Preview  │     │         STEP 3          │
+│ (.STL / .3MF / .GLB     │     │ (Interactive hillshade  │     │    Tune Parameters      │
+│  print at 0.12 mm layer)│     │  & Z(x) cross-section)  │     │ (Relief, Ramp, Pattern) │
 └─────────────────────────┘     └─────────────────────────┘     └─────────────────────────┘
 ```
 
-#### Paso 0: Preparación Previa de la Imagen Científica (Recomendaciones Críticas)
-Antes de ingresar cualquier imagen a TAMP-OS, realiza estas verificaciones preventivas en tu visor o editor de imágenes preferido:
-1. **Recortar barras de información y escalas micrométricas (*Data Bars / Micron Bars*):**
-   Los microscopios electrónicos (SEM/TEM) y de barrido óptico suelen incrustar una franja inferior de datos con parámetros técnicos (voltaje de aceleración, magnificación, distancia de trabajo) y una barra de escala en blanco o negro puro. **Es imprescindible recortar esta franja antes de procesar la imagen.** Si se conserva, el motor interpretará el texto y la barra como geometrías físicas extremas, generando muros verticales filosos o depresiones profundas que arruinan la experiencia táctil y confunden al usuario.
-2. **Definir la Región de Interés (*ROI*) y eliminar anotaciones:**
-   Recorta flechas de puntero, etiquetas de texto (*Fig. 1a*, *A*, *B*) o marcos artificiales de software. Concentra el encuadre en el área celular, mineral o nanométrica que deseas explorar táctilmente.
-3. **Alinear el gradiente en Modo Chroma (si aplica):**
-   Si la imagen representa un fenómeno físico continuo y unidireccional (por ejemplo, difusión lateral de litio en un electrodo o transferencia de calor de izquierda a derecha), rota la imagen para que el gradiente fluya horizontalmente. Esto coincidirá con la rampa cinestésica macro de TAMP-OS Chroma.
-4. **Preferir formatos sin compresión con pérdidas:**
-   Utiliza preferentemente archivos `.PNG`, `.TIFF` o `.BMP`. Si utilizas archivos `.JPG` con alta compresión, los artefactos de bloque de $8\times 8\text{ px}$ se traducirán en falsas rugosidades que la yema del dedo percibirá como asperezas mecánicas.
+#### Step 0: Pre-Processing Image Preparation (Critical Best Practices)
+Before loading any image into TAMP-OS, perform these simple preventive edits in your standard image viewer or editor:
+1. **Crop Data Information Bars and Micron Scale Bars (*Data Bars / Scale Bars*):**
+   Electron microscopes (SEM/TEM) and confocal scanners typically embed a black data bar at the bottom with operating parameters (accelerating voltage, working distance, magnification) and pure white/black micron scale bars. **You must crop out this footer bar before processing.** If left intact, the engine treats these text labels and scale bars as real physical topography, producing razor-sharp vertical walls or deep trenches that distort the tactile specimen and may create sharp, hazardous edges.
+2. **Define the Region of Interest (*ROI*) and Remove Visual Annotations:**
+   Crop out pointer arrows, panel labels (*Fig. 1a*, *A*, *B*), or software borders. Frame strictly the cellular, crystal, or biological structure you intend to explore tactually.
+3. **Align Continuous Gradients for Chroma Mode (if applicable):**
+   If your image depicts a directional physical phenomenon (such as lateral lithium diffusion across an electrode or a 1D thermal gradient from left to right), rotate the image so the gradient progresses horizontally. This aligns perfectly with TAMP-OS Chroma's natural macroscopic kinesthetic ramp.
+4. **Use Lossless Image Formats:**
+   Whenever possible, provide `.PNG`, `.TIFF`, or `.BMP` files. Heavy `.JPG` compression artifacts ($8\times 8\text{ px}$ blockiness) will be interpreted as spurious surface roughness that finger pads will sense as unintended mechanical friction.
 
 ---
 
-#### Paso 1: Cargar Imágenes Científicas
-- Pulsa el botón **`Add Images`** o selecciona múltiples archivos a la vez.
-- La aplicación calculará instantáneamente el tamaño en megapíxeles, la dispersión de rango dinámico y el detalle de bordes, sugiriendo automáticamente el preset de resolución más conveniente (`Low`, `Medium` o `High`).
+#### Step 1: Load Scientific Images
+- Click **`Add Images`** or drag-and-drop multiple files at once.
+- The software immediately computes source megapixels, effective dynamic range spread ($p_{95} - p_{5}$), and edge gradient density, automatically suggesting the recommended quality preset (`Low`, `Medium`, or `High`).
 
 ---
 
-#### Paso 2: Elegir el Modo Adecuado
-- Si la imagen codifica **topografía o luminancia** (SEM, TEM, AFM, fluorescencia monocanal, micrografías de luz): utiliza el modo **`TAMP-OS`**.
-- Si la imagen codifica una **variable física en color** (difusión química, concentración, termografía, paletas `Inferno`, `Viridis`, `Turbo` o espectros multicanal): activa el conmutador superior hacia **`TAMP-OS Chroma`**.
+#### Step 2: Choose the Appropriate Mode
+- For **topographic or grayscale intensity data** (SEM, TEM, AFM, single-channel fluorescence, optical microscopy): select **`TAMP-OS`** mode.
+- For **continuous scalar physical variables mapped to color** (chemical diffusion, concentration, thermography, `Inferno`, `Viridis`, `Turbo`, or multichannel spectra): toggle to **`TAMP-OS Chroma`** mode.
 
 ---
 
-#### Paso 3: Ajustar los Parámetros Táctiles
-- **Calidad de Malla (*Preset*):** Elige `Medium` (256 px) para un equilibrio ideal entre velocidad y resolución; `High` (512 px) para detalles celulares finos; `Low` (128 px) para prototipos ultra rápidos de verificación.
-- **En Modo TAMP-OS Clásico:**
-  - *Relief height:* Ajusta la elevación total del relieve (defecto: 3.0 mm).
-  - *Invert:* Actívalo (`On`) para imágenes TEM o de tinción histológica donde el espécimen de interés se ve oscuro sobre fondo claro.
-  - *Blur:* Suavizado gaussiano (defecto: 1.2) para atenuar ruido electrónico de escaneo.
-- **En Modo TAMP-OS Chroma:**
-  - *Colormap:* Selecciona la paleta que coincide con tu imagen (`Inferno`, `Viridis`, `Turbo`, `SVD Chromatic`).
-  - *Ramp elevation:* Ajusta la pendiente cinestésica macro (defecto: 1.8 mm).
-  - *Texture library:* Selecciona el patrón táctil (`Honeycomb`, `Dots`, `Stripes`, `Grid`, `Waves`, `Scales`).
-  - *Texture relief:* Altura de las crestas cutáneas (defecto: 0.6 mm).
+#### Step 3: Tune Tactile Parameters
+- **Mesh Quality Preset:** Choose `Medium` (256 px) for an optimal balance between slicing speed and spatial resolution; `High` (512 px) for fine cellular microstructures; `Low` (128 px) for ultra-fast validation drafts.
+- **In Classic TAMP-OS Mode:**
+  - *Relief height:* Total height excursion between darkest and lightest pixels (default: 3.0 mm).
+  - *Invert:* Enable (`On`) for TEM or histochemically stained specimens where the structure of interest is dark on a bright background.
+  - *Blur:* Gaussian smoothing sigma (default: 1.2) to suppress high-frequency detector shot noise.
+- **In TAMP-OS Chroma Mode:**
+  - *Colormap:* Select the palette matching your scientific source (`Inferno`, `Viridis`, `Turbo`, `SVD Chromatic`).
+  - *Ramp elevation:* Macro kinesthetic incline angle (default: 1.8 mm).
+  - *Texture library:* Haptic pattern (`Honeycomb`, `Dots`, `Stripes`, `Grid`, `Waves`, `Scales`).
+  - *Texture relief:* Micro-ridge elevation above the ramp surface (default: 0.6 mm).
 
 ---
 
-#### Paso 4: Inspeccionar la Vista Previa en Vivo y Perfil $Z(x)$
-- Selecciona cualquier imagen de la lista para ver su renderizado *hillshade* interactivo y su gráfica de **Corte Transversal $Z(x)$**.
-- Comprueba que la base rígida (1.2 mm), la rampa y las crestas de textura se distingan con claridad geométrica antes de iniciar la impresión.
+#### Step 4: Inspect Live Tactile Preview & $Z(x)$ Cross-Section
+- Click any loaded image to inspect its live shaded hillshade rendering and real-time **Cross-Section Profile $Z(x)$**.
+- Confirm that the solid base (1.2 mm), macro ramp, and texture peaks are geometrically distinct and safe to explore by touch before spending filament.
 
 ---
 
-#### Paso 5: Generar y Exportar Modelos 3D
-- Selecciona los formatos deseados: **`.STL`** (impresión directa), **`.3MF`** (ligero y exacto) y/o **`.GLB`** (web/presentaciones).
-- Selecciona tu carpeta de destino y pulsa **`Generate All Models`**. El proceso se ejecutará en segundo plano en hilos concurrentes sin bloquear la aplicación.
+#### Step 5: Generate and Export 3D Models
+- Check your desired target formats: **`.STL`** (universal slicer format), **`.3MF`** (lightweight compressed XML), and/or **`.GLB`** (web/AR/PowerPoint inspection).
+- Select your destination directory and click **`Generate All Models`**. Processing runs asynchronously in background worker threads without freezing the user interface.
 
 ---
 
-#### Paso 6: Laminación (Slicing) e Impresión 3D
-- Carga el archivo `.STL` o `.3MF` en tu software de corte (PrusaSlicer, Bambu Studio, Cura, OrcaSlicer, Simplify3D).
-- **Orientación:** Coloca la pieza plana sobre la cama caliente aprovechando su base inferior plana en $Z=0$.
-- **Altura de capa:** $0.12 - 0.16\text{ mm}$ (garantiza una pendiente suave en la rampa sin escalonamientos perceptibles).
-- **Relleno (*Infill*):** $100\%$ para la base sólida inferior de 1.2 mm o mínimo $40\%$ con patrón rectilíneo para máxima estabilidad estructural.
+#### Step 6: Slicing & 3D Printing (FDM / SLA)
+- Import the `.STL` or `.3MF` model into your slicer of choice (PrusaSlicer, Bambu Studio, Cura, OrcaSlicer, Simplify3D).
+- **Bed Orientation:** Lay the model flat on the heated bed using its planar $Z=0$ solid base.
+- **Layer Height:** $0.12 - 0.16\text{ mm}$ (ensures smooth ramp transitions without noticeable fingernail stair-stepping).
+- **Infill:** $100\%$ for the solid 1.2 mm base slab, or minimum $40\%$ rectilinear infill for optimal rigidity.
 
 ---
 
-### ¿Cuándo usar TAMP-OS clásico vs. cuándo usar TAMP-OS Chroma?
+### When to Use Classic TAMP-OS vs. TAMP-OS Chroma
 
-TAMP-OS v2 integra dos tecnologías táctiles distintas según la naturaleza de la información científica que deseas transmitir al tacto:
+TAMP-OS v2 provides two distinct tactile mapping paradigms depending on the scientific nature of the input data:
 
 ```
-                            ¿Qué tipo de imagen científica tienes?
-                                              │
-                ┌─────────────────────────────┴─────────────────────────────┐
-                ▼                                                           ▼
-     [Topografía o Intensidad Visual]                            [Variable Física en Color]
-  SEM, TEM, AFM, microscopía de luz,                         Difusión química, concentración (Li),
-   fotografía biológica, fluorescencia                      temperatura, espectrometría, mapas Raman,
-               monocanal.                                       paletas Inferno, Viridis, Turbo.
-                │                                                           │
-                ▼                                                           ▼
-       Usa MODO TAMP-OS                                          Usa MODO TAMP-OS CHROMA
-  • Tono de gris → Altura física.                            • Color RGB → Proyección KD-Tree escalar.
-  • Conserva el relieve anatómico.                           • Rampa macroscópica (cinestesia global).
-  • Ajustes clave: Invert & Relief.                          • Microtextura háptica modulada.
+                            What type of scientific image do you have?
+                                                │
+                ┌───────────────────────────────┴───────────────────────────────┐
+                ▼                                                               ▼
+    [Topography or Optical Intensity]                                [Physical Scalar in Color]
+  SEM, TEM, AFM, brightfield/darkfield,                           Chemical diffusion, Li concentration,
+  biological photography, single-channel                           temperature, spectrometry, Raman maps,
+               fluorescence.                                           Inferno, Viridis, Turbo maps.
+                │                                                               │
+                ▼                                                               ▼
+       Use TAMP-OS CLASSIC                                            Use TAMP-OS CHROMA
+  • Grayscale value → Physical height.                           • RGB color → Scaled KD-Tree projection.
+  • Preserves real anatomical topography.                        • Macroscopic ramp (global kinesthesia).
+  • Key controls: Invert & Relief height.                        • Modulated cutaneous microtexture.
 ```
 
-#### Tabla Comparativa por Técnica Científica:
+#### Technique Decision Matrix:
 
-| Técnica / Tipo de Imagen | Modo Recomendado | Colormap / Ajuste | Razón Científica |
+| Scientific Imaging Technique | Recommended Mode | Colormap / Setting | Scientific Rationale |
 | :--- | :--- | :--- | :--- |
-| **Microscopía Electrónica de Barrido (SEM)** | **TAMP-OS** | `Invert: Off` | La imagen mide topografía y dispersión electrónica; el relieve directo representa fielmente la estructura física. |
-| **Microscopía Electrónica de Transmisión (TEM)** | **TAMP-OS** | `Invert: On` | Las zonas electrodensas (de interés) suelen verse oscuras sobre fondo claro; `Invert: On` las eleva tácticamente. |
-| **Microscopía Óptica Operando / In Situ** | **Chroma** | `Inferno` | Muestra gradientes continuos de concentración química (ej. intercalación de Li); la rampa y textura transmiten la magnitud. |
-| **Microscopía de Fluorescencia Confocal** | **Chroma** | `Viridis` o `SVD` | El gradiente de emisión fluorófora indica densidad molecular cuantitativa; evita colapsos de luminancia. |
-| **Mapas Espectroscópicos (Raman, FTIR, EDS)** | **Chroma** | `Turbo` o `SVD` | El color codifica bandas espectrales o abundancia elemental; la microtextura permite discriminar picos con el tacto. |
-| **Termografía Infrarroja / Mapas de Calor** | **Chroma** | `Inferno` o `Turbo` | El gradiente térmico continuo se comprende intuitivamente al sentir mayor rugosidad y elevación hacia las zonas calientes. |
+| **Scanning Electron Microscopy (SEM)** | **TAMP-OS** | `Invert: Off` | Measures surface topography and electron scattering; direct heightmapping faithfully conveys true physical contours. |
+| **Transmission Electron Microscopy (TEM)** | **TAMP-OS** | `Invert: On` | Electron-dense features appear dark against a bright beam background; `Invert: On` elevates structures of interest. |
+| **Operando / In Situ Optical Microscopy** | **Chroma** | `Inferno` | Displays continuous chemical diffusion (e.g. Li intercalation); ramp and texture communicate concentration magnitude. |
+| **Confocal Fluorescence Microscopy** | **Chroma** | `Viridis` or `SVD` | Fluorophore emission gradient indicates quantitative molecular density; prevents severe luminance collapse. |
+| **Spectroscopic Maps (Raman, FTIR, EDS)** | **Chroma** | `Turbo` or `SVD` | Color encodes spectral bands or elemental abundance; haptic microtexture enables tactual peak discrimination. |
+| **Thermal Imaging / Heatmaps** | **Chroma** | `Inferno` or `Turbo` | Continuous heat gradients are intuitively understood when sensing higher elevation and texture density toward hot spots. |
 
-#### ¿Por qué no usar TAMP-OS clásico con mapas de color?
-En un mapa de color como *Inferno* o *Viridis*, **la luminancia estándar no es monótona**. Colores con significado físico opuesto (como un púrpura oscuro y un rojo saturado) pueden dar exactamente el mismo tono de gris, colapsando zonas de alta concentración en depresiones engañosas.
+#### Why Not Use Classic TAMP-OS for Color Heatmaps?
+In standard scientific colormaps like *Inferno* or *Viridis*, **standard grayscale luminance is non-monotonic**. Colormaps with opposite physical meanings (such as dark purple and saturated red) yield identical gray values, collapsing regions of peak concentration into deceptive depressions.
 
-#### ¿Por qué no usar TAMP-OS Chroma para fotos normales o SEM?
-El modo Chroma impone una rampa macroscópica ($Z_{\text{rampa}}$) pensada para fenómenos de gradiente continuo o difusión. Si se aplica a una micrografía SEM de una celda biológica o un grano mineral, inclinaría artificialmente la muestra deformando su geometría real.
+#### Why Not Use TAMP-OS Chroma for Standard SEM Micrographs?
+Chroma mode enforces a macroscopic elevation ramp ($Z_{\text{ramp}}$) engineered for diffusion fronts or continuous gradients. Applying it to an SEM micrograph of a cell or crystal grain would tilt the specimen unnaturally, distorting its real anatomical morphology.
 
 ---
 
-### Matriz de Parámetros: "¿Qué pasa si modifico este ajuste?"
+### Parameter Matrix: "What happens if I adjust this setting?"
 
-#### A. Modo TAMP-OS Clásico (Litografías Grayscale)
+#### A. Classic TAMP-OS Mode (Grayscale Lithophanes)
 
-| Parámetro | Rango / Opciones | Valor por defecto | Efecto físico en la pieza impresa | ¿Cuándo modificarlo? |
+| Parameter | Options / Range | Default | Physical Effect on Printed Model | When to Modify? |
 | :--- | :--- | :--- | :--- | :--- |
-| **Quality (Presets)** | `Low` (128 px)<br>`Medium` (256 px)<br>`High` (512 px) | `Medium` | Controla la densidad de triángulos de la malla y el tamaño del archivo STL (de ~2.3 MB a ~37.5 MB). | Usa `Low` para prototipos ultra rápidos de validación; usa `High` para microscopía con micro-estructuras finas. |
-| **Relief height** | 1.0 – 5.0 mm | 3.0 mm | Altura neta entre el tono más oscuro y el más claro. A mayor valor, mayor contraste de altura táctil. | Redúcelo a 1.5–2.0 mm en imágenes muy ruidosas para evitar puntas filosas; súbelo a 3.5–4.0 mm en imágenes de bajo contraste. |
-| **Invert** | `Off` / `On` | `Off` (Luz = Alto) | Invierte la polaridad: en `Off`, lo blanco es alto; en `On`, lo oscuro es alto. | Actívalo (`On`) en imágenes TEM o de tinción biológica donde la muestra de interés es oscura y el fondo es blanco. |
-| **Blur (sigma)** | 0.0 – 3.0 | 1.2 | Aplica suavizado gaussiano antes de generar la malla. Elimina el grano del sensor o ruido de escaneo SEM. | Auméntalo si la pieza impresa se siente rasposa por ruido electrónico del microscopio; redúcelo a 0.5 si la imagen es perfectamente nítida. |
-| **Base thickness** | 0.8 – 3.0 mm | 1.2 mm | Espesor del zócalo sólido bajo el relieve. | Mantén 1.2 mm para rigidez óptima. Si usas boquillas grandes (0.6 mm) o piezas de más de 150 mm, usa 1.6–2.0 mm para prevenir arqueamiento. |
-| **Nozzle & Layer** | Boquillas: 0.2, 0.4, 0.6 mm<br>Capas: 0.08 – 0.20 mm | 0.4 mm boquilla<br>0.12 mm capa | Define el paso de escalera vertical y la resolución de detalle horizontal. | Usa boquilla de 0.2 mm y capas de 0.08 mm si requieres micro-detalles celulares imperceptibles en 0.4 mm. |
+| **Quality (Presets)** | `Low` (128 px)<br>`Medium` (256 px)<br>`High` (512 px) | `Medium` | Governs mesh triangle density and file footprint (~2.3 MB to ~37.5 MB STL). | Use `Low` for quick validation prints; use `High` for intricate microstructures and high-resolution microscopy. |
+| **Relief height** | 1.0 – 5.0 mm | 3.0 mm | Net vertical height between darkest and lightest pixels. Controls tactile contrast. | Lower to 1.5–2.0 mm on noisy scans to prevent sharp spikes; raise to 3.5–4.0 mm on low-contrast images. |
+| **Invert** | `Off` / `On` | `Off` (Light = High) | Inverts polarity: `Off` raises light pixels; `On` raises dark pixels. | Enable (`On`) for TEM or histochemically stained specimens where features of interest are dark. |
+| **Blur (sigma)** | 0.0 – 3.0 | 1.2 | Applies 2D Gaussian smoothing before mesh triangulation. Suppresses sensor shot noise. | Increase if the printed piece feels harsh from detector noise; reduce to 0.5 if the image is crisp. |
+| **Base thickness** | 0.8 – 3.0 mm | 1.2 mm | Solid flat base plate beneath the relief. | Keep at 1.2 mm for optimal stiffness. For large prints (>150 mm) or wide nozzles, increase to 1.6–2.0 mm to prevent warping. |
+| **Nozzle & Layer** | Nozzles: 0.2, 0.4, 0.6 mm<br>Layers: 0.08 – 0.20 mm | 0.4 mm nozzle<br>0.12 mm layer | Defines vertical stepping and minimum resolvable in-plane feature size. | Use a 0.2 mm nozzle and 0.08 mm layer height when sub-millimeter cellular details are required. |
 
 ---
 
-#### B. Modo TAMP-OS Chroma (Mapas de Color y Gradientes)
+#### B. TAMP-OS Chroma Mode (Colormaps & Gradients)
 
-| Parámetro | Rango / Opciones | Valor por defecto | Efecto cinestésico / cutáneo | ¿Cuándo modificarlo? |
+| Parameter | Options / Range | Default | Kinesthetic / Cutaneous Sensation | When to Modify? |
 | :--- | :--- | :--- | :--- | :--- |
-| **Colormap** | `Inferno`, `Viridis`, `Turbo`, `SVD Chromatic`, `Luminance` | `Inferno` | Algoritmo de indexación RGB a valor escalar $0–1$. | Debe coincidir con la paleta de la imagen científica fuente (ej. `Inferno` para difusión Li/térmica; `Viridis` para microscopía confocal). |
-| **Ramp elevation** | 0.5 – 4.0 mm | 1.8 mm | **Componente Cinestésico Macro:** Inclinación global de la placa. La mano y muñeca sienten hacia dónde sube el gradiente. | Súbelo a 2.5–3.0 mm si el gradiente es suave y difícil de distinguir; redúcelo a 1.0 mm si prefieres un modelo más plano. |
-| **Texture library** | `Dots`, `Stripes`, `Grid`, `Waves`, `Scales`, `Honeycomb` | `Honeycomb` | **Componente Cutáneo Micro:** Forma geométrica del patrón que modula su densidad/relieve según el valor de color. | Elige según el tipo de datos o preferencia del usuario táctil (ver catálogo de texturas abajo). |
-| **Texture relief** | 0.2 – 1.5 mm | 0.6 mm | Altura de las crestas de la textura sobre la superficie de la rampa. | Auméntalo a 0.8–1.0 mm para yemas con menor sensibilidad táctil; bájalo a 0.4 mm para texturas muy densas. |
-| **Polarity** | `Normal` / `Inverted` | `Normal` | Define si el valor máximo del mapa de color es la zona más rugosa/alta o la más lisa/plana. | En `Normal`, mayor concentración = mayor textura. En `Inverted`, la concentración alta es completamente lisa. |
+| **Colormap** | `Inferno`, `Viridis`, `Turbo`, `SVD Chromatic`, `Luminance` | `Inferno` | Algorithm indexing RGB pixels to scalar values $0–1$. | Must match the source palette (e.g., `Inferno` for Li/thermal maps; `Viridis` for confocal data). |
+| **Ramp elevation** | 0.5 – 4.0 mm | 1.8 mm | **Macro Kinesthetic Component:** Global plate inclination felt by hand and wrist proprioception. | Increase to 2.5–3.0 mm if the gradient is subtle; lower to 1.0 mm for a flatter model. |
+| **Texture library** | `Dots`, `Stripes`, `Grid`, `Waves`, `Scales`, `Honeycomb` | `Honeycomb` | **Micro Cutaneous Component:** Geometric pattern modulating density/height with color value. | Select according to data symmetry and user haptic preference (see texture catalog below). |
+| **Texture relief** | 0.2 – 1.5 mm | 0.6 mm | Peak height of pattern ridges above the ramp surface. | Increase to 0.8–1.0 mm for fingertips with lower tactile sensitivity; decrease to 0.4 mm for dense patterns. |
+| **Polarity** | `Normal` / `Inverted` | `Normal` | Determines whether maximum color value corresponds to highest texture or smooth surface. | In `Normal`, higher concentration = denser texture. In `Inverted`, maximum concentration is completely smooth. |
 
 ---
 
-### Catálogo de la Biblioteca de Texturas Táctiles
+### Tactile Texture Library Catalog
 
-Cada textura de la biblioteca fue diseñada específicamente respetando la resolución de la yema del dedo humano ($\approx 1.2–2.0\text{ mm}$) y la cinemática de extrusión FDM:
+Each geometric pattern in the library was engineered specifically around the spatial two-point discrimination threshold of the human fingertip ($\approx 1.2–2.0\text{ mm}$) and FDM extrusion mechanics:
 
 ![Texture Library Catalog](assets/texture_library_catalog.png)
 
-1. **`Dots` (Matriz de Puntos Gaussianos):**
-   - *Sensación háptica:* Granularidad puntual tipo estarcido/braille. Al deslizar el dedo se percibe un cambio progresivo de espaciado y prominencia de puntos.
-   - *Mejor uso:* Datos de densidad de partículas, dispersión de electrones o mapas de calor estáticos.
-2. **`Stripes` (Estrías Paralelas Direccionales):**
-   - *Sensación háptica:* Fricción direccional notable. Al pasar el dedo transversalmente produce una vibración táctil clara de alta frecuencia.
-   - *Mejor uso:* Flujos direccionales, gradientes 1D o perfiles de difusión rectilínea.
-3. **`Grid` (Cuadrícula / Crosshatch):**
-   - *Sensación háptica:* Rugosidad isotrópica uniforme. No depende de la dirección en que se desplace el dedo sobre la muestra.
-   - *Mejor uso:* Mapas de potencial eléctrico o matrices de correlación bidimensionales.
-4. **`Waves` (Ondas Sinusoidales Continuas):**
-   - *Sensación háptica:* Transición suave y ondulada sin aristas filosas. Muy agradable al tacto prolongado.
-   - *Mejor uso:* Fenómenos ondulatorios, frentes de difusión continua y perfiles de oscilación.
-5. **`Scales` (Escamas Asimétricas Imbricadas):**
-   - *Sensación háptica:* Asimetría de fricción (suave en una dirección, retentiva en sentido contrario).
-   - *Mejor uso:* Gradientes irreversibles, flujo de fluidos o transporte polarizado.
-6. **`Honeycomb` (Celdas Hexagonales):**
-   - *Sensación háptica:* Estructura compartimentada con bordes definidos. Fácilmente identificable incluso con relieve bajo.
-   - *Mejor uso:* Morfología celular, granos de material policristalino y concentración química continua.
+1. **`Dots` (Gaussian Point Array):**
+   - *Haptic feel:* Point-wise stippling / Braille-like granularity. Fingertip scanning reveals progressive dot height and spacing changes.
+   - *Best for:* Particle density data, electron scattering, or discrete thermal hotspots.
+2. **`Stripes` (Directional Parallel Ribs):**
+   - *Haptic feel:* Pronounced directional friction. Perpendicular stroking produces noticeable high-frequency vibrotactile feedback.
+   - *Best for:* Directional flows, 1D gradients, or rectilinear diffusion fronts.
+3. **`Grid` (Crosshatch Matrix):**
+   - *Haptic feel:* Isotropic, direction-independent surface roughness.
+   - *Best for:* Electric potential fields or 2D correlation matrices.
+4. **`Waves` (Continuous Sine Ribs):**
+   - *Haptic feel:* Smooth, flowing transitions without sharp ridges. Comfortable for extended exploratory touch.
+   - *Best for:* Wave propagation phenomena, oscillatory fronts, and acoustic fields.
+5. **`Scales` (Asymmetric Imbricated Shingles):**
+   - *Haptic feel:* Directional friction asymmetry (smooth in one stroke direction, resistive in reverse).
+   - *Best for:* Irreversible diffusion gradients, polarized transport, or fluid flow direction.
+6. **`Honeycomb` (Hexagonal Tessellation):**
+   - *Haptic feel:* Compartmentalized cellular structure with crisp boundaries. Easily identified even at low relief heights.
+   - *Best for:* Cellular biology, polycrystalline grain boundaries, and continuous chemical concentration.
 
 </details>
 
 ---
 
-## 3. Cómo funciona
+## 3. How It Works
 
 <details>
-<summary><b>▶ Haz clic para desplegar: Fundamento Científico y Matemático (TAMP-OS General y TAMP-OS Chroma)</b></summary>
+<summary><b>Click to expand: Scientific & Mathematical Principles (General TAMP-OS and TAMP-OS Chroma)</b></summary>
 
-TAMP-OS v2 integra dos motores computacionales complementarios según la naturaleza de la información científica de entrada: el **Motor General TAMP-OS** (para micrografías e intensidades en escala de grises) y el **Motor TAMP-OS Chroma** (para gradientes continuos de concentración y mapas de color multicanal). Ambos motores convergen en una fase compartida de síntesis de malla tridimensional estanca (*watertight*) calibrada para la fisiología táctil y la cinemática de manufactura aditiva.
+TAMP-OS v2 integrates two complementary computational engines tailored to the physical nature of scientific input data: the **General TAMP-OS Engine** (for grayscale micrographs and intensity fields) and the **TAMP-OS Chroma Engine** (for continuous concentration gradients and multichannel colormaps). Both converge on a shared watertight 2-manifold mesh generation stage calibrated for human tactile physiology and additive manufacturing physics.
 
 ```
                   ┌─────────────────────────────────────────────────────────────┐
-                  │                 IMAGEN CIENTÍFICA DE ENTRADA                │
+                  │                    INPUT SCIENTIFIC IMAGE                   │
                   └──────────────────────────────┬──────────────────────────────┘
                                                  │
                    ┌─────────────────────────────┴─────────────────────────────┐
                    ▼                                                           ▼
-     [Topografía o Intensidad Monocanal]                        [Gradientes Continuos / Color]
-       SEM, TEM, AFM, fluorescencia,                               Mapas químicos, difusión,
-       luz visible, radiografías.                                 temperatura, paletas espectrales.
+     [Topography or Grayscale Intensity]                        [Continuous Gradients / Colors]
+       SEM, TEM, AFM, fluorescence,                                Chemical diffusion, temperature,
+       brightfield, radiography.                                   spectrometry, colormaps.
                    │                                                           │
         ┌──────────┴──────────┐                                     ┌──────────┴──────────┐
-        │   MOTOR GENERAL     │                                     │     MOTOR CHROMA    │
-        │ • Análisis de imagen│                                     │ • Decodificación    │
-        │ • Estiramiento 2-98%│                                     │   cKDTree O(log N)  │
-        │ • Filtro Gaussiano  │                                     │ • Rampa cinestésica │
-        │ • Mapeo Directo Z   │                                     │ • Textura cutánea   │
+        │  GENERAL TAMP-OS    │                                     │     CHROMA ENGINE   │
+        │ • Quality & Presets │                                     │ • cKDTree O(log N)  │
+        │ • 2-98% Stretch     │                                     │   Color Decoding    │
+        │ • Gaussian Filter   │                                     │ • Kinesthetic Ramp  │
+        │ • Direct Z Height   │                                     │ • Cutaneous Texture │
         └──────────┬──────────┘                                     └──────────┬──────────┘
                    │                                                           │
                    └─────────────────────────────┬─────────────────────────────┘
                                                  ▼
                                 ┌─────────────────────────────────┐
-                                │   SÍNTESIS DE MALLA 2-MANIFOLD  │
-                                │   • Superficie topográfica      │
-                                │   • Plano base inferior Z = 0   │
-                                │   • 4 Paredes perimetrales      │
+                                │   2-MANIFOLD MESH SYNTHESIS     │
+                                │   • Upper relief topography     │
+                                │   • Planar solid bottom Z = 0   │
+                                │   • 4 Perimeter closing walls   │
                                 └────────────────┬────────────────┘
                                                  │
                                                  ▼
                                 ┌─────────────────────────────────┐
-                                │   EXPORTACIÓN (.STL, .3MF, .GLB)│
+                                │   EXPORT (.STL, .3MF, .GLB)     │
                                 └─────────────────────────────────┘
 ```
 
 ---
 
-### A. Motor General TAMP-OS: Litografías Topográficas en Escala de Grises
+### A. General TAMP-OS Engine: Grayscale Topographic Lithophanes
 
-El motor clásico está concebido para micrografías donde la intensidad de gris del sensor codifica directamente la elevación física, densidad electrónica o luminancia de emisión (SEM, TEM, AFM, fluorescencia monocanal, microscopía de campo claro).
+Engineered for microscopy where sensor grayscale values correlate directly with physical specimen height, electron density, or optical emission (SEM, TEM, AFM, single-channel fluorescence, brightfield optical microscopy).
 
-#### 1. Análisis Estadístico y Sincronización Boquilla-Píxel
-Antes de transformar la imagen, el sistema evalúa sus propiedades matemáticas para optimizar el mallado:
-- **Rango dinámico efectivo:** Intervalo percentil $p_{95} - p_{5}$.
-- **Saturación de extremos:** Proporción de píxeles recortados en sombras $(\le 3)$ o luces quemadas $(\ge 252)$.
-- **Densidad de bordes finos:** Cuantificación del gradiente espacial medio $\|\nabla I(x,y)\| = \sqrt{(\partial I/\partial x)^2 + (\partial I/\partial y)^2}$.
-- **Sincronización con la boquilla física de impresión:** A partir del ancho físico de la boquilla $d_{\text{nozzle}}$ (típicamente 0.4 mm) y la dimensión física seleccionada para la pieza $W$ (ej. 100 mm), el algoritmo calcula la cuadrícula ideal de muestreo:
+#### 1. Statistical Image Analysis & Nozzle-Pixel Coupling
+Before mesh construction, the engine mathematically characterizes the image:
+- **Effective dynamic range:** Percentile spread $p_{95} - p_{5}$.
+- **Extreme clipping:** Proportion of pixels saturated in deep shadows ($\le 3$) or blown-out highlights ($\ge 252$).
+- **Fine edge density:** Mean spatial gradient magnitude $\|\nabla I(x,y)\| = \sqrt{(\partial I/\partial x)^2 + (\partial I/\partial y)^2}$.
+- **Printer nozzle-pixel coupling:** Based on the physical nozzle orifice $d_{\text{nozzle}}$ (typically 0.4 mm) and the desired print dimension $W$ (e.g., 100 mm), the algorithm calculates the ideal sampling grid:
   $$N_{\text{px}} = \text{snap}_2\left(\frac{W}{d_{\text{nozzle}}}\right)$$
-  Esto ajusta la resolución de la malla (128, 256 o 512 puntos) de modo que cada vértice corresponda a una traza física real del filamento, evitando mallas astronómicas que la impresora no puede resolver físicamente.
+  This snaps mesh resolution (128, 256, or 512 vertices) so each vertex maps to a physically resolvable extruded bead, eliminating oversized meshes that exceed the kinematic resolution of the 3D printer.
 
-#### 2. Pipeline de Acondicionamiento de Señal
-1. **Extracción de luminancia:** Conversión del canal monócromo $I(x,y) \in [0, 255]$.
-2. **Re-muestreo con interpolación Lanczos:** Ajuste de resolución espacial conservando la nitidez de bordes celulares o cristalinos.
-3. **Estiramiento de contraste robusto (Contrast Stretch):** Normalización de la imagen entre los percentiles $2\%$ y $98\%$:
+#### 2. Signal Conditioning Pipeline
+1. **Luminance Extraction:** Conversion to a single grayscale intensity field $I(x,y) \in [0, 255]$.
+2. **Lanczos Resampling:** Spatial scaling preserving sharp biological cell walls and grain boundaries.
+3. **Robust Percentile Contrast Stretch:** Normalization between the 2nd and 98th percentiles:
    $$I_{\text{norm}}(x,y) = \text{clip}\left(\frac{I(x,y) - I_{2\%}}{I_{98\%} - I_{2\%} + \epsilon}, \; 0.0, \; 1.0\right)$$
-   Este paso descarta el ruido aislado de fondo o píxeles parásitos y distribuye toda la señal útil en el rango dinámico táctil completo $[0, 1]$.
-4. **Filtrado Gaussiano de suavizado ($\sigma$):** Convolución bidimensional con núcleo gaussiano para atenuar el ruido de disparo (*shot noise*) característico de detectores SEM:
-   $$I_{\text{suave}}(x,y) = I_{\text{norm}} * G_\sigma(x,y), \quad G_\sigma(u,v) = \frac{1}{2\pi\sigma^2}\exp\left(-\frac{u^2+v^2}{2\sigma^2}\right)$$
-5. **Inversión de polaridad opcional:** En muestras como TEM o tinciones biológicas donde las estructuras de mayor interés son oscuras sobre fondo claro, se invierte la señal:
-   $$I_{\text{final}}(x,y) = 1.0 - I_{\text{suave}}(x,y)$$
+   This discards sensor hot pixels and background noise, expanding the meaningful signal across the full haptic dynamic range $[0, 1]$.
+4. **Gaussian Spatial Smoothing ($\sigma$):** 2D convolution with a Gaussian kernel to attenuate detector shot noise:
+   $$I_{\text{smooth}}(x,y) = I_{\text{norm}} * G_\sigma(x,y), \quad G_\sigma(u,v) = \frac{1}{2\pi\sigma^2}\exp\left(-\frac{u^2+v^2}{2\sigma^2}\right)$$
+5. **Optional Polarity Inversion:** For TEM or stained specimens where structures of interest are electron-dense (dark on light background):
+   $$I_{\text{final}}(x,y) = 1.0 - I_{\text{smooth}}(x,y)$$
 
-#### 3. Mapeo Directo a Altura Física
-Cada píxel normalizado se traslada directamente a una cota milimétrica vertical $Z$:
-$$Z(x,y) = Z_{\text{base}} + I_{\text{final}}(x,y) \cdot h_{\text{relieve}}$$
-donde $Z_{\text{base}}$ (típicamente 1.2 mm) forma un zócalo sólido que previene el alabeo térmico (*warping*), y $h_{\text{relieve}}$ (1.0–5.0 mm) aporta el contraste táctil suficiente para ser discriminado por la sensibilidad táctil humana.
+#### 3. Direct Topographic Height Mapping
+Each normalized pixel is translated into physical elevation $Z$:
+$$Z(x,y) = Z_{\text{base}} + I_{\text{final}}(x,y) \cdot h_{\text{relief}}$$
+where $Z_{\text{base}}$ (typically 1.2 mm) creates a rigid foundation preventing thermal warping on the build plate, and $h_{\text{relief}}$ (1.0–5.0 mm) establishes clear tactile contrast easily discernable by finger pads.
 
 ---
 
-### B. Motor TAMP-OS Chroma: Decodificación Cromática y Modulación Háptica
+### B. TAMP-OS Chroma Engine: Chromatic Decoding & Dual-Scale Haptic Modulation
 
-#### El Problema Científico: ¿Por qué fallan las litografías clásicas con el color?
-Las litografías convencionales convierten la imagen calculando la luminancia estándar de pantalla:
+#### The Scientific Problem: Why Classic Lithophanes Fail with Color Data
+Conventional lithophanes compute standard display luminance:
 $$L = 0.299\,R + 0.587\,G + 0.114\,B$$
 
-En mapas de color continuos (como `Inferno`, `Viridis` o `Turbo`), **la luminancia no es monótona**. Colores con significado físico opuesto (como un púrpura de baja concentración y un rojo saturado) pueden compartir idéntico valor de luminancia, colapsando zonas críticas en depresiones táctiles engañosas.
+In continuous scientific palettes (such as `Inferno`, `Viridis`, or `Turbo`), **luminance is strictly non-monotonic**. Distinct colors with diametrically opposed physical meanings (such as low-concentration dark purple and saturated red) often share identical luminance, causing critical diffusion fronts to collapse into false tactile valleys.
 
-#### 1. Decodificación Geométrica por Árbol KD (`cKDTree`)
-Para recuperar el valor físico escalar exacto $s \in [0, 1]$ de cada píxel $(x, y)$, TAMP-OS Chroma proyecta cada tupla RGB en una tabla de correspondencia (LUT) calibrada de 256 puntos tridimensionales:
+#### 1. Geometric Decoding via KD-Tree (`cKDTree`)
+To extract the exact scalar physical value $s \in [0, 1]$ for each pixel $(x, y)$, TAMP-OS Chroma projects every RGB triplet onto a calibrated 256-point lookup table (LUT) in 3D color space:
 $$\mathbf{LUT}_k = \big(R_k, G_k, B_k\big), \quad k \in [0, 255]$$
 
-Utilizando el árbol espacial optimizado `scipy.spatial.cKDTree`, cada píxel $\mathbf{C}(x, y) = (R, G, B)$ se empareja en tiempo logarítmico $\mathcal{O}(\log N)$ con su centroide más próximo en el mapa de color:
+Using an optimized `scipy.spatial.cKDTree`, each pixel $\mathbf{C}(x, y) = (R, G, B)$ is matched in logarithmic time $\mathcal{O}(\log N)$ to its nearest palette centroid:
 $$s(x,y) = \frac{1}{255} \arg\min_{k} \|\mathbf{C}(x,y) - \mathbf{LUT}_k\|_2$$
 
-Para imágenes con paletas multicanal no estándar, se aplica una descomposición en valores singulares (SVD) sobre la nube cromática para extraer el eje de mayor varianza física.
+For custom or non-standard multichannel spectra, Singular Value Decomposition (SVD) is performed on the color cloud to extract the primary chromatic variance axis.
 
-#### 2. Codificación Háptica de Doble Escala (Dual-Scale Haptic Architecture)
-La superficie táctil resultante combina tres estratos aditivos:
-$$Z_{\text{total}}(x,y) = Z_{\text{base}} + Z_{\text{rampa}}(x,y) + Z_{\text{textura}}(x,y)$$
+#### 2. Dual-Scale Haptic Architecture
+The resulting printable surface combines three additive layers:
+$$Z_{\text{total}}(x,y) = Z_{\text{base}} + Z_{\text{ramp}}(x,y) + Z_{\text{texture}}(x,y)$$
 
 ```
 ▲ Z (mm)
 │
-│       ▲ Z_textura (0.2–1.5 mm: modulación de microtextura cutánea)
+│       ▲ Z_texture (0.2–1.5 mm: cutaneous microtexture modulation)
 │     ┌─┴─┐
-│     │/\ │/\ │/\ │/\   ◄── Crestas táctiles
-│    /│  /│  /│  /│  /  ◄── Rampa macro Z_rampa (0.5–4.0 mm: sensación cinestésica)
+│     │/\ │/\ │/\ │/\   ◄── Tactile crests
+│    /│  /│  /│  /│  /  ◄── Macro ramp Z_ramp (0.5–4.0 mm: kinesthetic incline)
 │   / │ / │ / │ / │ /
 │  ───────────────────
-│  ███████████████████  ◄── Base rígida Z_base (1.2 mm: estabilidad estructural)
+│  ███████████████████  ◄── Rigid solid base Z_base (1.2 mm: structural stability)
 └────────────────────────► X (mm)
 ```
 
-- **Componente Cinestésico Macro ($Z_{\text{rampa}}$):** Inclinación global lineal $Z_{\text{rampa}}(x,y) = x \cdot (\Delta Z_{\text{rampa}} / W)$ que orienta inmediatamente la palma y muñeca del usuario en la dirección del gradiente térmico o químico.
-- **Componente Cutáneo Micro ($Z_{\text{textura}}$):** Modulación de relieve $Z_{\text{textura}}(x,y) = \mathcal{T}_{\text{patrón}}(x,y) \cdot s(x,y) \cdot h_{\text{relieve}}$ percibida por los mecanorreceptores de la yema del dedo (puntos, estrías, panal, etc.).
+- **Macro Kinesthetic Component ($Z_{\text{ramp}}$):** Linear incline $Z_{\text{ramp}}(x,y) = x \cdot (\Delta Z_{\text{ramp}} / W)$ orienting the user's hand and wrist immediately in the direction of diffusion or heat flow.
+- **Micro Cutaneous Component ($Z_{\text{texture}}$):** Relief modulation $Z_{\text{texture}}(x,y) = \mathcal{T}_{\text{pattern}}(x,y) \cdot s(x,y) \cdot h_{\text{relief}}$ sensed by slow-adapting Merkel (SA-I) and fast-adapting Meissner (FA-I) mechanoreceptors in the scanning fingertip.
 
 ---
 
-### C. Síntesis Geométrica de Mallas Estancas (Watertight 2-Manifold Mesh)
+### C. Watertight 2-Manifold Mesh Synthesis
 
-Tanto el motor General como Chroma finalizan en el mismo generador geométrico vectorial para asegurar que el modelo sea 100% imprimible y libre de errores topológicos:
-1. **Malla Topográfica Superior:** Discretización en celdas cuadrangulares con pasos métricos $\Delta x = W / (cols - 1)$ y $\Delta y = H / (rows - 1)$. Cada cuadrante se triangula con dos caras orientadas con normales hacia el exterior (+Z).
-2. **Plano Base Inferior en $Z = 0$:** Fondo perfectamente plano con normales hacia el interior (-Z), asegurando máxima adhesión a la placa de impresión.
-3. **Paredes Perimetrales Verticales (Side Walls):** Se cierran los cuatro laterales ($x=0$, $x=W$, $y=0$, $y=H$) cosiendo la cota variable $Z(x,y)$ con la cota base $Z=0$.
-El sólido resultante contiene exactamente $(rows-1)(cols-1)\times 4 + 4(rows+cols-2)$ triángulos, garantizando un archivo `.STL` o `.3MF` hermético (*watertight / solid manifold*) sin orificios ni aristas no conformes.
+Both engines feed into the same geometric mesh generator to guarantee error-free 3D printing:
+1. **Upper Topographic Surface:** 2D grid partitioned with steps $\Delta x = W / (cols - 1)$ and $\Delta y = H / (rows - 1)$. Each cell is triangulated into two faces with outward (+Z) normals.
+2. **Planar Bottom Slab ($Z = 0$):** Flat bottom plane with downward (-Z) normals, guaranteeing clean bed adhesion.
+3. **Vertical Perimeter Side Walls:** Four rectangular triangular skirts seal the boundaries ($x=0$, $x=W$, $y=0$, $y=H$) connecting relief contours to $Z=0$.
+The resulting watertight solid contains exactly $(rows-1)(cols-1)\times 4 + 4(rows+cols-2)$ triangles, ensuring instant compatibility with any slicer without requiring mesh repair operations.
 
 ---
 
-### D. Fisiología Táctil y Parámetros de Manufactura FDM
+### D. Tactile Physiology & FDM Manufacturing Limits
 
-| Variable de Diseño | Valor Recomendado | Justificación Fisiológica y de Manufactura |
+| Design Parameter | Recommended Value | Physiological & Manufacturing Justification |
 | :--- | :--- | :--- |
-| **Paso espacial de textura ($p$)** | $2.5 - 3.0\text{ mm}$ | La agudeza táctil espacial de dos puntos en el pulpejo del dedo índice humano oscila entre $1.2$ y $2.0\text{ mm}$. Un paso de 2.8 mm garantiza que cada cresta se sienta individualizada y no como un bloque plano. |
-| **Relieve de textura ($h$)** | $0.5 - 0.8\text{ mm}$ | Claramente superior al umbral de detección estática cutánea ($\sim 0.06\text{ mm}$) e inmune a las tolerancias de la primera capa de la impresora. |
-| **Espesor del zócalo base** | $1.2\text{ mm}$ (3 capas sólidas) | Previene el pandeo (*warping*) del plástico PLA/PETG al enfriarse y despegarse de la cama caliente. |
-| **Altura de capa vertical** | $0.12 - 0.16\text{ mm}$ | Proporciona transiciones suaves en la pendiente de la rampa sin generar escalonamiento perceptible con la uña. |
+| **Spatial texture pitch ($p$)** | $2.5 - 3.0\text{ mm}$ | The two-point spatial discrimination threshold on human index fingertips is $1.2 - 2.0\text{ mm}$. A 2.8 mm pitch ensures each ridge is felt as an individual feature rather than a flat plateau. |
+| **Texture relief height ($h$)** | $0.5 - 0.8\text{ mm}$ | Substantially higher than the static cutaneous detection threshold ($\sim 0.06\text{ mm}$) and immune to first-layer printer bed levelling tolerances. |
+| **Base plate thickness** | $1.2\text{ mm}$ (3 solid layers) | Prevents thermal warping and corner detachment of PLA/PETG cooling on heated beds. |
+| **Vertical layer height** | $0.12 - 0.16\text{ mm}$ | Yields smooth ramp slopes without noticeable fingernail stair-stepping artifacts. |
 
 </details>
 
 ---
 
-## 4. Formatos de Exportación Compatibles
+## 4. Supported 3D Export Formats
 
 <details>
-<summary><b>▶ Haz clic para desplegar: Especificaciones de Archivos 3D (.STL, .3MF, .GLB)</b></summary>
+<summary><b>Click to expand: 3D File Specifications (.STL, .3MF, .GLB)</b></summary>
 
 1. **`.STL` (Binary Stereolithography):**
-   - Compatible con todos los laminadores del mercado (PrusaSlicer, Bambu Studio, Cura, OrcaSlicer, Simplify3D).
-   - Generación de mallas estrictamente estancas (*watertight / 2-manifold*) con fondo sólido plano y paredes perimetrales cerradas.
+   - Universally compatible with all slicing software (PrusaSlicer, Bambu Studio, Cura, OrcaSlicer, Simplify3D).
+   - Generates strictly watertight, 2-manifold solid meshes with planar bottom faces and sealed perimeter walls.
 2. **`.3MF` (3D Manufacturing Format):**
-   - Archivo XML comprimido estándar que conserva dimensiones métricas exactas y reduce el peso en disco en más de un $60\%$.
+   - Standard compressed XML package preserving exact metric dimensions while reducing disk storage by over $60\%$.
 3. **`.GLB` (Binary glTF 2.0):**
-   - Para visualización directa en web, visores de realidad aumentada (AR) o inspección en PowerPoint / navegadores 3D.
+   - Ideal for direct web visualization, augmented reality (AR) inspection, or embedded 3D slides in presentations.
 
 </details>
 
 ---
 
-## 5. Galería de Ejemplos Comparativos
+## 5. Comparative Examples Gallery
 
 <details>
-<summary><b>▶ Haz clic para desplegar: Galería de Ejemplos y Perfiles Transversales</b></summary>
+<summary><b>Click to expand: Examples Gallery & Cross-Section Profiles</b></summary>
 
-### Ejemplo 1: Gradiente de Colores Continuo (Inferno)
-> Ejemplo de un gradiente de colores continuo codificado en paleta Inferno.
+### Example 1: Continuous Color Gradient (Inferno)
+> Example of a continuous color gradient encoded with the Inferno colormap.
 
-![Ejemplo 1 Li Inferno](assets/preview_ejemplo1_li_inferno.png)
+![Example 1 Li Inferno](assets/preview_ejemplo1_li_inferno.png)
 
-- **Entrada:** Mapa de color continuo en paleta `Inferno` donde los tonos oscuros (negro/púrpura) representan los valores mínimos y los tonos claros (amarillo brillante) los valores máximos.
-- **Salida Táctil:** Rampa de 1.8 mm inclinada en la dirección del gradiente con modulación de textura táctil. El usuario ciego o con baja visión percibe la inclinación macro con la mano y la saturación de microtextura con el pulpejo.
-
----
-
-### Ejemplo 2: Espectro 2D Multicanal (Eje Cromático SVD)
-
-![Ejemplo 2 Espectro 2D](assets/preview_ejemplo2_espectro_2d.png)
-
-- **Entrada:** Espectro complejo con múltiples picos y transiciones de color no estándar (cian $\to$ verde $\to$ amarillo $\to$ magenta).
-- **Salida Táctil:** Proyección en el primer componente principal cromático (SVD) acoplado a rampa bidireccional y textura de escamas/estrías.
+- **Input:** Continuous color map in `Inferno` where dark tones (black/purple) denote minimum values and bright tones (yellow) denote maximum values.
+- **Tactile Output:** 1.8 mm macroscopic ramp oriented along the gradient combined with modulated surface microtexture. Blind or low-vision users perceive the global slope with their palm/hand and microtexture saturation with their fingertips.
 
 ---
 
-### Comparativa de Perfiles Transversales $Z(x)$
+### Example 2: 2D Multichannel Spectrum (SVD Chromatic Axis)
 
-![Perfiles Transversales](assets/preview_profiles.png)
+![Example 2 2D Spectrum](assets/preview_ejemplo2_espectro_2d.png)
 
-El corte transversal $Z(x)$ generado en vivo por la interfaz ilustra cómo la base rígida (1.2 mm), la rampa macroscópica y los dientes de microtextura se superponen armónicamente para garantizar un tacto inequívoco sin comprometer la resistencia mecánica.
+- **Input:** Complex scientific spectrum with multiple emission peaks and non-standard color transitions (cyan $\to$ green $\to$ yellow $\to$ magenta).
+- **Tactile Output:** Projection onto the first principal chromatic component (SVD) coupled with a bidirectional elevation ramp and shingle/rib microtexture.
+
+---
+
+### Cross-Sectional Profile Comparison $Z(x)$
+
+![Cross-Section Profiles](assets/preview_profiles.png)
+
+The real-time $Z(x)$ cross-section plot rendered in the GUI illustrates how the solid base (1.2 mm), macroscopic elevation ramp, and microtexture peaks superimpose seamlessly to guarantee unambiguous tactile reading without sacrificing mechanical strength.
 
 </details>
 
 ---
 
-## Repositorio Histórico (Archive)
+## Historical Archive
 
 <details>
-<summary><b>▶ Haz clic para desplegar: Árbol de Carpetas Históricas</b></summary>
+<summary><b>Click to expand: Archived Project Folders & Legacy Suites</b></summary>
 
-- `archive/tamp_original/`: Contiene el código fuente y las figuras históricas del proyecto SICB 2026 (`TAMP-main.zip` original).
-- `archive/tamp_os_v1/`: Contiene la suite v1 (`tamp_batch_gui_v2.ipynb`, `tamp_resolution_compare.ipynb`, etc.).
-- `archive/tamp_os_chroma/`: Contiene los scripts exploratorios y notebooks de desarrollo inicial de Chroma.
+- `archive/tamp_original/`: Source code and figures from the original SICB 2026 conference presentation (`TAMP-main.zip`).
+- `archive/tamp_os_v1/`: Legacy v1 suite (`tamp_batch_gui_v2.ipynb`, `tamp_resolution_compare.ipynb`, etc.).
+- `archive/tamp_os_chroma/`: Exploratory scripts and early research notebooks from initial Chroma development.
 
 </details>
 
 ---
 
-## Licencia
+## License
 
 <details>
-<summary><b>▶ Haz clic para desplegar: Términos de Licencia</b></summary>
+<summary><b>Click to expand: License Terms</b></summary>
 
-Distribuido bajo la licencia MIT. Consulta el archivo [LICENSE](LICENSE) para más detalles.
+Distributed under the MIT License. See [LICENSE](LICENSE) for details.
 
 </details>
