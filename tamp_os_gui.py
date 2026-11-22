@@ -452,6 +452,16 @@ def get_colormap_tree(colormap_name):
     return lut, tree
 
 
+def get_mpl_colormap(colormap_name):
+    """Return a matplotlib Colormap object corresponding to the given colormap name."""
+    c_lower = colormap_name.lower().replace(" ", "")
+    if c_lower in ("inferno", "viridis", "turbo"):
+        return mpl.colormaps[c_lower]
+    lut, _ = get_colormap_tree(colormap_name)
+    from matplotlib.colors import ListedColormap
+    return ListedColormap(lut)
+
+
 def decode_colormap(img_pil, colormap_name="Inferno", return_fallback_status=False):
     """
     Fast RGB-to-scalar projection using scipy.spatial.cKDTree.
@@ -863,11 +873,11 @@ class TAMPGUI:
                       width=110, height=28, command=self._launch_pyvista_3d).pack(side="right")
 
         # Preview content body: 2-column layout (Image on left, Meta specs on right)
-        prev_body = ctk.CTkFrame(self.card_preview, fg_color="transparent")
-        prev_body.pack(fill="both", expand=True, padx=16, pady=4)
+        self.prev_body = ctk.CTkFrame(self.card_preview, fg_color="transparent")
+        self.prev_body.pack(fill="both", expand=True, padx=16, pady=4)
 
         # Left side: Preview display
-        self.prev_img_box = ctk.CTkFrame(prev_body, corner_radius=8, fg_color="#0F172A", width=280, height=210)
+        self.prev_img_box = ctk.CTkFrame(self.prev_body, corner_radius=8, fg_color="#0F172A", width=280, height=210)
         self.prev_img_box.pack(side="left", padx=(0, 14), fill="both", expand=True)
         self.prev_img_box.pack_propagate(False)
 
@@ -876,7 +886,7 @@ class TAMPGUI:
         self.lbl_preview_image.pack(fill="both", expand=True)
 
         # Right side: Meta Specs Grid
-        self.meta_frame = ctk.CTkFrame(prev_body, fg_color="transparent", width=200)
+        self.meta_frame = ctk.CTkFrame(self.prev_body, fg_color="transparent", width=200)
         self.meta_frame.pack(side="right", fill="y", anchor="n", pady=6)
 
         specs = [
@@ -896,10 +906,10 @@ class TAMPGUI:
             setattr(self, attr_name, val_lbl)
 
         # Cross section plot container (visible in Chroma mode)
-        self.plot_container = ctk.CTkFrame(self.card_preview, fg_color="transparent", height=100)
+        self.plot_container = ctk.CTkFrame(self.card_preview, fg_color="transparent", height=90)
         self.plot_canvas = None
 
-        # Helper hint text
+        # Helper hint text (packed directly under preview title when fallback is active)
         self.lbl_colormap_fallback = ctk.CTkLabel(
             self.card_preview, text="",
             font=("Segoe UI", 10, "bold"), text_color="#D97706", anchor="w"
@@ -1223,6 +1233,8 @@ class TAMPGUI:
             self.card_chroma.pack_forget()
             if hasattr(self, "lbl_colormap_fallback"):
                 self.lbl_colormap_fallback.pack_forget()
+            if hasattr(self, "prev_img_box"):
+                self.prev_img_box.configure(height=210)
             self.th_invert_lbl.configure(text="Invert")
             self.lbl_preview_title.configure(text="Relief preview")
             self.lbl_preview_hint.configure(text="Light = raised, dark = low. Check this before generating: if the feature you want to feel is sunk, tick Invert.")
@@ -1230,6 +1242,8 @@ class TAMPGUI:
             self.plot_container.pack_forget()
         else:
             self.card_chroma.pack(fill="x", pady=(0, 10), before=self.card_printer)
+            if hasattr(self, "prev_img_box"):
+                self.prev_img_box.configure(height=180)
             self.th_invert_lbl.configure(text="Polarity")
             self.lbl_preview_title.configure(text="Live tactile preview")
             self.lbl_preview_hint.configure(text=f"Shaded relief with {self.chroma_texture_var.get()} texture. Grazing light shows how it will feel under the finger.")
@@ -1450,22 +1464,22 @@ class TAMPGUI:
 
             thumb = self.thumbnail_cache.get(img["path"])
             if thumb:
-                t_lbl = ctk.CTkLabel(row_card, text="", image=thumb, width=36, height=36, fg_color=card_bg)
+                t_lbl = ctk.CTkLabel(row_card, text="", image=thumb, width=36, height=36, fg_color=card_bg, bg_color=card_bg)
                 t_lbl.pack(side="left", padx=(8, 6), pady=6)
                 t_lbl.bind("<Button-1>", make_row_click(idx))
 
             # Text Block
-            txt_box = ctk.CTkFrame(row_card, fg_color=card_bg)
+            txt_box = ctk.CTkFrame(row_card, fg_color=card_bg, bg_color=card_bg)
             txt_box.pack(side="left", fill="both", expand=True, padx=4)
             txt_box.bind("<Button-1>", make_row_click(idx))
 
-            n_lbl = ctk.CTkLabel(txt_box, text=img["name"], font=("Segoe UI", 11, "bold"), text_color="#0F172A", anchor="w", fg_color=card_bg)
+            n_lbl = ctk.CTkLabel(txt_box, text=img["name"], font=("Segoe UI", 11, "bold"), text_color="#0F172A", anchor="w", fg_color=card_bg, bg_color=card_bg)
             n_lbl.pack(anchor="w", pady=(4, 0))
             n_lbl.bind("<Button-1>", make_row_click(idx))
 
             rec_preset = recommend_preset_from_analysis(img["analysis"])
             sub_txt = f"{img['width']} × {img['height']} px · suggested {rec_preset}"
-            s_lbl = ctk.CTkLabel(txt_box, text=sub_txt, font=("Segoe UI", 9), text_color="#64748B", anchor="w", fg_color=card_bg)
+            s_lbl = ctk.CTkLabel(txt_box, text=sub_txt, font=("Segoe UI", 9), text_color="#64748B", anchor="w", fg_color=card_bg, bg_color=card_bg)
             s_lbl.pack(anchor="w", pady=(0, 4))
             s_lbl.bind("<Button-1>", make_row_click(idx))
 
@@ -1479,7 +1493,7 @@ class TAMPGUI:
                 return handler
 
             q_cb = ctk.CTkComboBox(row_card, values=["Low", "Medium", "High"], state="readonly", width=82, height=26, corner_radius=6,
-                                   fg_color="#FFFFFF", border_width=1, border_color="#CBD5E1", button_color="#F1F5F9",
+                                   bg_color=card_bg, fg_color="#FFFFFF", border_width=1, border_color="#CBD5E1", button_color="#F1F5F9",
                                    button_hover_color="#E2E8F0", text_color="#0F172A", font=("Segoe UI", 11),
                                    dropdown_fg_color="#FFFFFF", dropdown_text_color="#0F172A", dropdown_hover_color="#EFF6FF",
                                    command=make_q_change(idx))
@@ -1497,13 +1511,13 @@ class TAMPGUI:
                 return handler
 
             inv_chk = ctk.CTkCheckBox(row_card, text=inv_txt, variable=inv_var, width=20, height=20, checkbox_width=18, checkbox_height=18,
-                                      corner_radius=4, fg_color="#2563EB", text_color="#0F172A", font=("Segoe UI", 11),
+                                      corner_radius=4, bg_color=card_bg, fg_color="#2563EB", text_color="#0F172A", font=("Segoe UI", 11),
                                       command=make_inv_toggle(idx, inv_var))
             inv_chk.pack(side="left", padx=8)
 
             # Delete button (✕)
             del_btn = ctk.CTkButton(row_card, text="✕", width=24, height=24, corner_radius=12,
-                                    fg_color="transparent", text_color="#94A3B8", hover_color="#FEE2E2",
+                                    bg_color=card_bg, fg_color="transparent", text_color="#94A3B8", hover_color="#FEE2E2",
                                     font=("Segoe UI", 11, "bold"),
                                     command=lambda i=idx: self._remove_single_image(i))
             del_btn.pack(side="right", padx=(4, 8))
@@ -1639,7 +1653,7 @@ class TAMPGUI:
             scalar_field, fell_back = decode_colormap(raw_img, colormap_name=colormap_name, return_fallback_status=True)
             if fell_back:
                 self.lbl_colormap_fallback.configure(text=f"Not a {colormap_name} image — using luminance")
-                self.lbl_colormap_fallback.pack(fill="x", padx=16, pady=(0, 4), before=self.lbl_preview_hint)
+                self.lbl_colormap_fallback.pack(fill="x", padx=16, pady=(0, 4), before=self.prev_body)
             else:
                 self.lbl_colormap_fallback.pack_forget()
 
@@ -1653,14 +1667,20 @@ class TAMPGUI:
             Z_total = base_thick + Z_ramp + Z_tex
 
             ls = LightSource(azdeg=315, altdeg=20)
-            shaded = ls.shade(Z_total, cmap=plt.cm.copper, blend_mode="overlay", vert_exag=2.0)
+            if fell_back or colormap_name == "Luminance":
+                cmap_to_use = plt.cm.gray
+            else:
+                cmap_to_use = get_mpl_colormap(colormap_name)
+
+            shaded = ls.shade(Z_total, cmap=cmap_to_use, blend_mode="overlay", vert_exag=2.0)
             pil_shaded = Image.fromarray((shaded[:, :, :3] * 255).astype(np.uint8))
             self._display_preview_image(pil_shaded)
             self._draw_cross_section_plot(Z_total, sz_x, base_thick)
 
     def _display_preview_image(self, pil_img):
         w, h = pil_img.size
-        max_w, max_h = 280, 210
+        max_w = 280
+        max_h = 180 if self.mode == "chroma" else 210
         scale = min(max_w / max(1, w), max_h / max(1, h))
         disp_w = max(1, int(w * scale))
         disp_h = max(1, int(h * scale))
@@ -1673,7 +1693,7 @@ class TAMPGUI:
         profile_z = Z[mid_row, :]
         x_mm = np.linspace(0, width_mm, len(profile_z))
 
-        fig = plt.Figure(figsize=(4.8, 1.2), dpi=80, facecolor="#FFFFFF")
+        fig = plt.Figure(figsize=(4.8, 0.9), dpi=100, facecolor="#FFFFFF")
         ax = fig.add_subplot(111)
         ax.set_facecolor("#F8FAFC")
         ax.fill_between(x_mm, 0, profile_z, color="#3B82F6", alpha=0.35)
@@ -1681,18 +1701,18 @@ class TAMPGUI:
         ax.axhline(z_base, color="#94A3B8", linestyle="--", lw=0.8, label=f"Base {z_base:.1f} mm")
         ax.set_xlim(0, width_mm)
         ax.set_ylim(0, max(profile_z) * 1.25)
-        ax.set_xlabel("X (mm)", fontsize=7, color="#475569")
-        ax.set_ylabel("Z (mm)", fontsize=7, color="#475569")
-        ax.tick_params(axis="both", labelsize=6, colors="#64748B")
-        ax.legend(fontsize=6, loc="upper left", framealpha=0.6)
-        fig.tight_layout(pad=0.4)
+        ax.set_xlabel("X (mm)", fontsize=7, color="#475569", labelpad=1)
+        ax.set_ylabel("Z (mm)", fontsize=7, color="#475569", labelpad=1)
+        ax.tick_params(axis="both", labelsize=6, colors="#64748B", pad=1)
+        ax.legend(fontsize=6, loc="upper left", framealpha=0.6, borderpad=0.2)
+        fig.tight_layout(pad=0.2)
 
         if self.plot_canvas:
             self.plot_canvas.get_tk_widget().destroy()
 
         self.plot_canvas = FigureCanvasTkAgg(fig, master=self.plot_container)
         self.plot_canvas.draw()
-        self.plot_canvas.get_tk_widget().pack(fill="x", padx=4, pady=2)
+        self.plot_canvas.get_tk_widget().pack(fill="x", padx=4, pady=0)
 
     def _launch_pyvista_3d(self):
         if not PYVISTA_AVAILABLE:
