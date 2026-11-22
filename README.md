@@ -8,12 +8,19 @@
 
 ### Navegación Rápida
 - [**1. Cómo lanzar**](#1-cómo-lanzar)
-- [**2. Guía de usuario (Matriz de Parámetros y Ejemplos)**](#2-guía-de-usuario)
+- [**2. Guía de usuario**](#2-guía-de-usuario)
 - [**3. Cómo funciona (Fundamento Científico y Matemático)**](#3-cómo-funciona)
+- [**4. Formatos de Exportación Compatibles**](#4-formatos-de-exportación-compatibles)
+- [**5. Galería de Ejemplos Comparativos**](#5-galería-de-ejemplos-comparativos)
+- [**Repositorio Histórico (Archive)**](#repositorio-histórico-archive)
+- [**Licencia**](#licencia)
 
 ---
 
 ## 1. Cómo lanzar
+
+<details>
+<summary><b>▶ Haz clic para desplegar: Requisitos, Instalación y Lanzamiento de la GUI</b></summary>
 
 TAMP-OS v2 integra en una sola aplicación de escritorio autónoma (`tamp_os_gui.py`) tanto el flujo clásico de litografías en escala de grises como la nueva tecnología **TAMP-OS Chroma** para gradientes y mapas de color multicanal.
 
@@ -53,16 +60,14 @@ En la barra superior de la aplicación puedes alternar instantáneamente entre l
 > [!NOTE]
 > **Persistencia:** Al cambiar de modo, **nunca se borra la lista de imágenes cargadas**. Además, la aplicación recuerda tu último modo seleccionado y tu carpeta de salida en `~/.tamp_settings.json`.
 
----
-
-- **Repositorio Histórico (Archive):**
-  - `archive/tamp_original/`: Contiene el código fuente y las figuras históricas del proyecto SICB 2026 (`TAMP-main.zip` original).
-  - `archive/tamp_os_v1/`: Contiene la suite v1 (`tamp_batch_gui_v2.ipynb`, `tamp_resolution_compare.ipynb`, etc.).
-  - `archive/tamp_os_chroma/`: Contiene los scripts exploratorios y notebooks de desarrollo inicial de Chroma.
+</details>
 
 ---
 
 ## 2. Guía de usuario
+
+<details>
+<summary><b>▶ Haz clic para desplegar: ¿Cuándo usar cada modo?, Matriz de Parámetros y Catálogo de Texturas</b></summary>
 
 ### ¿Cuándo usar TAMP-OS clásico vs. cuándo usar TAMP-OS Chroma?
 
@@ -156,38 +161,14 @@ Cada textura de la biblioteca fue diseñada específicamente respetando la resol
    - *Sensación háptica:* Estructura compartimentada con bordes definidos. Fácilmente identificable incluso con relieve bajo.
    - *Mejor uso:* Morfología celular, granos de material policristalino y concentración química continua.
 
----
-
-### Galería de Ejemplos Comparativos
-
-#### Ejemplo 1: Gradiente de Colores Continuo (Inferno)
-> Ejemplo de un gradiente de colores continuo codificado en paleta Inferno.
-
-![Ejemplo 1 Li Inferno](assets/preview_ejemplo1_li_inferno.png)
-
-- **Entrada:** Mapa de color continuo en paleta `Inferno` donde los tonos oscuros (negro/púrpura) representan los valores mínimos y los tonos claros (amarillo brillante) los valores máximos.
-- **Salida Táctil:** Rampa de 1.8 mm inclinada en la dirección del gradiente con modulación de textura táctil. El usuario ciego o con baja visión percibe la inclinación macro con la mano y la saturación de microtextura con el pulpejo.
-
----
-
-#### Ejemplo 2: Espectro 2D Multicanal (Eje Cromático SVD)
-
-![Ejemplo 2 Espectro 2D](assets/preview_ejemplo2_espectro_2d.png)
-
-- **Entrada:** Espectro complejo con múltiples picos y transiciones de color no estándar (cian $\to$ verde $\to$ amarillo $\to$ magenta).
-- **Salida Táctil:** Proyección en el primer componente principal cromático (SVD) acoplado a rampa bidireccional y textura de escamas/estrías.
-
----
-
-#### Comparativa de Perfiles Transversales $Z(x)$
-
-![Perfiles Transversales](assets/preview_profiles.png)
-
-El corte transversal $Z(x)$ generado en vivo por la interfaz ilustra cómo la base rígida (1.2 mm), la rampa macroscópica y los dientes de microtextura se superponen armónicamente para garantizar un tacto inequívoco sin comprometer la resistencia mecánica.
+</details>
 
 ---
 
 ## 3. Cómo funciona
+
+<details>
+<summary><b>▶ Haz clic para desplegar: Fundamento Científico y Matemático (cKDTree, Arquitectura Háptica y Fisiología FDM)</b></summary>
 
 ### El Problema Científico: ¿Por qué fallan las litografías clásicas con el color?
 
@@ -253,9 +234,14 @@ $$Z_{\text{textura}}(x,y) = \mathcal{T}_{\text{patrón}}(x,y) \cdot s(x,y) \cdot
 | **Espesor del zócalo base** | $1.2\text{ mm}$ (3 capas sólidas) | Previene el pandeo (*warping*) del plástico PLA/PETG al enfriarse y despegarse de la cama caliente. |
 | **Altura de capa vertical** | $0.12 - 0.16\text{ mm}$ | Proporciona transiciones suaves en la pendiente de la rampa sin generar escalonamiento perceptible con la uña. |
 
+</details>
+
 ---
 
-## Formatos de Exportación Compatibles
+## 4. Formatos de Exportación Compatibles
+
+<details>
+<summary><b>▶ Haz clic para desplegar: Especificaciones de Archivos 3D (.STL, .3MF, .GLB)</b></summary>
 
 1. **`.STL` (Binary Stereolithography):**
    - Compatible con todos los laminadores del mercado (PrusaSlicer, Bambu Studio, Cura, OrcaSlicer, Simplify3D).
@@ -265,8 +251,62 @@ $$Z_{\text{textura}}(x,y) = \mathcal{T}_{\text{patrón}}(x,y) \cdot s(x,y) \cdot
 3. **`.GLB` (Binary glTF 2.0):**
    - Para visualización directa en web, visores de realidad aumentada (AR) o inspección en PowerPoint / navegadores 3D.
 
+</details>
+
+---
+
+## 5. Galería de Ejemplos Comparativos
+
+<details>
+<summary><b>▶ Haz clic para desplegar: Galería de Ejemplos y Perfiles Transversales</b></summary>
+
+### Ejemplo 1: Gradiente de Colores Continuo (Inferno)
+> Ejemplo de un gradiente de colores continuo codificado en paleta Inferno.
+
+![Ejemplo 1 Li Inferno](assets/preview_ejemplo1_li_inferno.png)
+
+- **Entrada:** Mapa de color continuo en paleta `Inferno` donde los tonos oscuros (negro/púrpura) representan los valores mínimos y los tonos claros (amarillo brillante) los valores máximos.
+- **Salida Táctil:** Rampa de 1.8 mm inclinada en la dirección del gradiente con modulación de textura táctil. El usuario ciego o con baja visión percibe la inclinación macro con la mano y la saturación de microtextura con el pulpejo.
+
+---
+
+### Ejemplo 2: Espectro 2D Multicanal (Eje Cromático SVD)
+
+![Ejemplo 2 Espectro 2D](assets/preview_ejemplo2_espectro_2d.png)
+
+- **Entrada:** Espectro complejo con múltiples picos y transiciones de color no estándar (cian $\to$ verde $\to$ amarillo $\to$ magenta).
+- **Salida Táctil:** Proyección en el primer componente principal cromático (SVD) acoplado a rampa bidireccional y textura de escamas/estrías.
+
+---
+
+### Comparativa de Perfiles Transversales $Z(x)$
+
+![Perfiles Transversales](assets/preview_profiles.png)
+
+El corte transversal $Z(x)$ generado en vivo por la interfaz ilustra cómo la base rígida (1.2 mm), la rampa macroscópica y los dientes de microtextura se superponen armónicamente para garantizar un tacto inequívoco sin comprometer la resistencia mecánica.
+
+</details>
+
+---
+
+## Repositorio Histórico (Archive)
+
+<details>
+<summary><b>▶ Haz clic para desplegar: Árbol de Carpetas Históricas</b></summary>
+
+- `archive/tamp_original/`: Contiene el código fuente y las figuras históricas del proyecto SICB 2026 (`TAMP-main.zip` original).
+- `archive/tamp_os_v1/`: Contiene la suite v1 (`tamp_batch_gui_v2.ipynb`, `tamp_resolution_compare.ipynb`, etc.).
+- `archive/tamp_os_chroma/`: Contiene los scripts exploratorios y notebooks de desarrollo inicial de Chroma.
+
+</details>
+
 ---
 
 ## Licencia
 
+<details>
+<summary><b>▶ Haz clic para desplegar: Términos de Licencia</b></summary>
+
 Distribuido bajo la licencia MIT. Consulta el archivo [LICENSE](LICENSE) para más detalles.
+
+</details>
