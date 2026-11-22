@@ -160,13 +160,13 @@ Cada textura de la biblioteca fue diseñada específicamente respetando la resol
 
 ### Galería de Ejemplos Comparativos
 
-#### Ejemplo 1: Gradiente de Concentración de Li en $\text{Li}_x\text{Mn}_2\text{O}_4$ (Inferno)
-> Imagen cortesía del paper de M. Mead et al. (microscopía óptica operando durante desintercalación electroquímica).
+#### Ejemplo 1: Gradiente de Colores Continuo (Inferno)
+> Ejemplo de un gradiente de colores continuo codificado en paleta Inferno.
 
 ![Ejemplo 1 Li Inferno](assets/preview_ejemplo1_li_inferno.png)
 
-- **Entrada:** Mapa de color continuo en paleta `Inferno` donde el color negro/púrpura representa $0\%$ Li y el amarillo brillante representa $100\%$ Li.
-- **Salida Táctil:** Rampa de 1.8 mm inclinada en la dirección de difusión con modulación de textura táctil. El usuario ciego o con baja visión percibe la inclinación macro con la mano y la saturación de microtextura con el pulpejo.
+- **Entrada:** Mapa de color continuo en paleta `Inferno` donde los tonos oscuros (negro/púrpura) representan los valores mínimos y los tonos claros (amarillo brillante) los valores máximos.
+- **Salida Táctil:** Rampa de 1.8 mm inclinada en la dirección del gradiente con modulación de textura táctil. El usuario ciego o con baja visión percibe la inclinación macro con la mano y la saturación de microtextura con el pulpejo.
 
 ---
 
