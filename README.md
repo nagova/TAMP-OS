@@ -45,8 +45,6 @@ Ejecuta el script principal con un solo comando:
 python tamp_os_gui.py
 ```
 
-![TAMP-OS GUI Mockup](assets/chroma_gui_mockup.jpg)
-
 #### Conmutador de Modo (Segmented Control)
 En la barra superior de la aplicación puedes alternar instantáneamente entre los dos motores con un solo clic:
 - **`TAMP-OS`**: Para micrografías tradicionales (SEM, TEM, fluorescencia, luz visible). Traduce los tonos de gris directamente a relieve superficial.
