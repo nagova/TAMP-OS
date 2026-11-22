@@ -1362,7 +1362,10 @@ class TAMPGUI:
             self._add_image_paths(paths)
 
     def _load_default_examples_if_available(self):
-        base_dir = Path(__file__).resolve().parent
+        if getattr(sys, "frozen", False):
+            base_dir = Path(getattr(sys, "_MEIPASS", Path(sys.executable).parent))
+        else:
+            base_dir = Path(__file__).resolve().parent
         candidates = [
             base_dir / "examples" / "SEM_5um_raw.png",
             base_dir / "examples" / "crab_spider.jpg",

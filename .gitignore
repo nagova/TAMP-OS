@@ -6,6 +6,10 @@ __pycache__/
 # Jupyter
 .ipynb_checkpoints/
 
+# PyInstaller builds
+build/
+dist/
+
 # Generated mesh and print files (prevents repo bloat)
 output/
 TAMP_output/
