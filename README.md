@@ -7,8 +7,8 @@
 ---
 
 ### Navegación Rápida
-- [**1. Cómo lanzar**](#1-cómo-lanzar)
-- [**2. Guía de usuario**](#2-guía-de-usuario)
+- [**1. Cómo lanzar (Ejecutable .exe o Python)**](#1-cómo-lanzar)
+- [**2. Guía de usuario (Paso a Paso, Parámetros y Texturas)**](#2-guía-de-usuario)
 - [**3. Cómo funciona (Fundamento Científico y Matemático)**](#3-cómo-funciona)
 - [**4. Formatos de Exportación Compatibles**](#4-formatos-de-exportación-compatibles)
 - [**5. Galería de Ejemplos Comparativos**](#5-galería-de-ejemplos-comparativos)
@@ -20,15 +20,34 @@
 ## 1. Cómo lanzar
 
 <details>
-<summary><b>▶ Haz clic para desplegar: Requisitos, Instalación y Lanzamiento de la GUI</b></summary>
+<summary><b>▶ Haz clic para desplegar: Ejecutable .exe autónomo, Requisitos y Ejecución desde Python</b></summary>
 
-TAMP-OS v2 integra en una sola aplicación de escritorio autónoma (`tamp_os_gui.py`) tanto el flujo clásico de litografías en escala de grises como la nueva tecnología **TAMP-OS Chroma** para gradientes y mapas de color multicanal.
+TAMP-OS v2 integra en una sola aplicación de escritorio autónoma (`tamp_os_gui.py` / `TAMP-OS.exe`) tanto el flujo clásico de litografías en escala de grises como la nueva tecnología **TAMP-OS Chroma** para gradientes y mapas de color multicanal.
 
-### Requisitos del Sistema
-- **Python:** 3.9 o superior (probado en Windows, Linux y macOS).
+---
+
+### Opción A: Ejecutable Autónomo para Windows (`.exe` — Recomendado para usuarios generales)
+
+Al estilo de herramientas científicas clásicas como *ImageJ* o *Fiji*, TAMP-OS se puede ejecutar como una aplicación independiente portable:
+- **Sin necesidad de instalar Python**, librerías ni configurar la terminal.
+- Empaquetado con todas sus dependencias científicas (`numpy`, `scipy`, `matplotlib`, `pillow`, `customtkinter`, `numpy-stl`).
+
+#### Cómo obtenerlo y ejecutarlo:
+1. Ve a la sección de [Releases de GitHub](https://github.com/nagova/TAMP-OS/releases) (o descárgalo desde la carpeta `dist/TAMP-OS/` del repositorio).
+2. Descarga y extrae el paquete comprimido `TAMP-OS.zip`.
+3. Haz doble clic en **`TAMP-OS.exe`** para abrir la interfaz de escritorio de inmediato.
+
+---
+
+### Opción B: Ejecución desde Código Fuente (Multiplataforma: Windows, Linux, macOS)
+
+Si utilizas Linux, macOS o prefieres ejecutar y personalizar el código fuente en Python:
+
+#### Requisitos del Sistema
+- **Python:** 3.9 o superior (probado en Windows 10/11, Ubuntu/Debian y macOS).
 - **Impresora 3D:** Cualquier impresora FDM convencional (boquilla de 0.4 mm o 0.2 mm) o de resina (SLA).
 
-### Instalación Rápida
+#### Instalación y Ejecución:
 
 1. **Clonar el repositorio:**
    ```bash
@@ -40,19 +59,16 @@ TAMP-OS v2 integra en una sola aplicación de escritorio autónoma (`tamp_os_gui
    ```bash
    pip install -r requirements.txt
    ```
-   *(Incluye `numpy`, `pillow`, `scipy`, `numpy-stl`, `matplotlib` y `pyvista`)*.
+   *(Incluye `numpy`, `pillow`, `scipy`, `numpy-stl`, `matplotlib`, `customtkinter` y `pyvista`)*.
+
+3. **Lanzar la aplicación:**
+   ```bash
+   python tamp_os_gui.py
+   ```
 
 ---
 
-### Lanzar la Interfaz de Escritorio (TAMP-OS v2 GUI)
-
-Ejecuta el script principal con un solo comando:
-
-```bash
-python tamp_os_gui.py
-```
-
-#### Conmutador de Modo (Segmented Control)
+### Conmutador de Modo (Segmented Control)
 En la barra superior de la aplicación puedes alternar instantáneamente entre los dos motores con un solo clic:
 - **`TAMP-OS`**: Para micrografías tradicionales (SEM, TEM, fluorescencia, luz visible). Traduce los tonos de gris directamente a relieve superficial.
 - **`TAMP-OS Chroma`**: Para imágenes con gradientes de concentración continua, mapas de temperatura o datos espectrales (ej. difusión de Li en electrodos, mapas Raman, espectrometría de masas). Combina una rampa de elevación cinestésica con modulación de microtextura háptica.
@@ -67,7 +83,86 @@ En la barra superior de la aplicación puedes alternar instantáneamente entre l
 ## 2. Guía de usuario
 
 <details>
-<summary><b>▶ Haz clic para desplegar: ¿Cuándo usar cada modo?, Matriz de Parámetros y Catálogo de Texturas</b></summary>
+<summary><b>▶ Haz clic para desplegar: Flujo Paso a Paso, ¿Cuándo usar cada modo?, Matriz de Parámetros y Catálogo de Texturas</b></summary>
+
+### Flujo de Trabajo Paso a Paso (Step-by-Step Guide)
+
+Sigue esta guía secuencial para transformar tus imágenes científicas en modelos 3D táctiles óptimos:
+
+```
+┌─────────────────────────┐     ┌─────────────────────────┐     ┌─────────────────────────┐
+│         PASO 0          │ ──► │         PASO 1          │ ──► │         PASO 2          │
+│  Preparación de Imagen  │     │   Cargar en TAMP-OS     │     │    Seleccionar Modo     │
+│ (Recortar textos/escalas│     │ (Análisis automático de │     │ (TAMP-OS Clásico vs.    │
+│  y seleccionar ROI)     │     │  resolución y calidad)  │     │  TAMP-OS Chroma)        │
+└─────────────────────────┘     └─────────────────────────┘     └─────────────────────────┘
+                                                                             │
+┌─────────────────────────┐     ┌─────────────────────────┐                  ▼
+│         PASO 5          │ ◄── │         PASO 4          │ ◄── ┌─────────────────────────┐
+│ Exportar & Slicing FDM  │     │  Inspección en Vivo     │     │         PASO 3          │
+│ (.STL / .3MF / .GLB     │     │ (Hillshade y corte      │     │  Ajustar Parámetros     │
+│  e imprimir a 0.12 mm)  │     │  transversal Z(x))      │     │ (Relieve, Rampa, Patrón)│
+└─────────────────────────┘     └─────────────────────────┘     └─────────────────────────┘
+```
+
+#### Paso 0: Preparación Previa de la Imagen Científica (Recomendaciones Críticas)
+Antes de ingresar cualquier imagen a TAMP-OS, realiza estas verificaciones preventivas en tu visor o editor de imágenes preferido:
+1. **Recortar barras de información y escalas micrométricas (*Data Bars / Micron Bars*):**
+   Los microscopios electrónicos (SEM/TEM) y de barrido óptico suelen incrustar una franja inferior de datos con parámetros técnicos (voltaje de aceleración, magnificación, distancia de trabajo) y una barra de escala en blanco o negro puro. **Es imprescindible recortar esta franja antes de procesar la imagen.** Si se conserva, el motor interpretará el texto y la barra como geometrías físicas extremas, generando muros verticales filosos o depresiones profundas que arruinan la experiencia táctil y confunden al usuario.
+2. **Definir la Región de Interés (*ROI*) y eliminar anotaciones:**
+   Recorta flechas de puntero, etiquetas de texto (*Fig. 1a*, *A*, *B*) o marcos artificiales de software. Concentra el encuadre en el área celular, mineral o nanométrica que deseas explorar táctilmente.
+3. **Alinear el gradiente en Modo Chroma (si aplica):**
+   Si la imagen representa un fenómeno físico continuo y unidireccional (por ejemplo, difusión lateral de litio en un electrodo o transferencia de calor de izquierda a derecha), rota la imagen para que el gradiente fluya horizontalmente. Esto coincidirá con la rampa cinestésica macro de TAMP-OS Chroma.
+4. **Preferir formatos sin compresión con pérdidas:**
+   Utiliza preferentemente archivos `.PNG`, `.TIFF` o `.BMP`. Si utilizas archivos `.JPG` con alta compresión, los artefactos de bloque de $8\times 8\text{ px}$ se traducirán en falsas rugosidades que la yema del dedo percibirá como asperezas mecánicas.
+
+---
+
+#### Paso 1: Cargar Imágenes Científicas
+- Pulsa el botón **`Add Images`** o selecciona múltiples archivos a la vez.
+- La aplicación calculará instantáneamente el tamaño en megapíxeles, la dispersión de rango dinámico y el detalle de bordes, sugiriendo automáticamente el preset de resolución más conveniente (`Low`, `Medium` o `High`).
+
+---
+
+#### Paso 2: Elegir el Modo Adecuado
+- Si la imagen codifica **topografía o luminancia** (SEM, TEM, AFM, fluorescencia monocanal, micrografías de luz): utiliza el modo **`TAMP-OS`**.
+- Si la imagen codifica una **variable física en color** (difusión química, concentración, termografía, paletas `Inferno`, `Viridis`, `Turbo` o espectros multicanal): activa el conmutador superior hacia **`TAMP-OS Chroma`**.
+
+---
+
+#### Paso 3: Ajustar los Parámetros Táctiles
+- **Calidad de Malla (*Preset*):** Elige `Medium` (256 px) para un equilibrio ideal entre velocidad y resolución; `High` (512 px) para detalles celulares finos; `Low` (128 px) para prototipos ultra rápidos de verificación.
+- **En Modo TAMP-OS Clásico:**
+  - *Relief height:* Ajusta la elevación total del relieve (defecto: 3.0 mm).
+  - *Invert:* Actívalo (`On`) para imágenes TEM o de tinción histológica donde el espécimen de interés se ve oscuro sobre fondo claro.
+  - *Blur:* Suavizado gaussiano (defecto: 1.2) para atenuar ruido electrónico de escaneo.
+- **En Modo TAMP-OS Chroma:**
+  - *Colormap:* Selecciona la paleta que coincide con tu imagen (`Inferno`, `Viridis`, `Turbo`, `SVD Chromatic`).
+  - *Ramp elevation:* Ajusta la pendiente cinestésica macro (defecto: 1.8 mm).
+  - *Texture library:* Selecciona el patrón táctil (`Honeycomb`, `Dots`, `Stripes`, `Grid`, `Waves`, `Scales`).
+  - *Texture relief:* Altura de las crestas cutáneas (defecto: 0.6 mm).
+
+---
+
+#### Paso 4: Inspeccionar la Vista Previa en Vivo y Perfil $Z(x)$
+- Selecciona cualquier imagen de la lista para ver su renderizado *hillshade* interactivo y su gráfica de **Corte Transversal $Z(x)$**.
+- Comprueba que la base rígida (1.2 mm), la rampa y las crestas de textura se distingan con claridad geométrica antes de iniciar la impresión.
+
+---
+
+#### Paso 5: Generar y Exportar Modelos 3D
+- Selecciona los formatos deseados: **`.STL`** (impresión directa), **`.3MF`** (ligero y exacto) y/o **`.GLB`** (web/presentaciones).
+- Selecciona tu carpeta de destino y pulsa **`Generate All Models`**. El proceso se ejecutará en segundo plano en hilos concurrentes sin bloquear la aplicación.
+
+---
+
+#### Paso 6: Laminación (Slicing) e Impresión 3D
+- Carga el archivo `.STL` o `.3MF` en tu software de corte (PrusaSlicer, Bambu Studio, Cura, OrcaSlicer, Simplify3D).
+- **Orientación:** Coloca la pieza plana sobre la cama caliente aprovechando su base inferior plana en $Z=0$.
+- **Altura de capa:** $0.12 - 0.16\text{ mm}$ (garantiza una pendiente suave en la rampa sin escalonamientos perceptibles).
+- **Relleno (*Infill*):** $100\%$ para la base sólida inferior de 1.2 mm o mínimo $40\%$ con patrón rectilíneo para máxima estabilidad estructural.
+
+---
 
 ### ¿Cuándo usar TAMP-OS clásico vs. cuándo usar TAMP-OS Chroma?
 
