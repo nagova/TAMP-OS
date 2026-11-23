@@ -2,7 +2,10 @@
 > **Microscopy & Spectral Images to Accessible Tactile 3D Prints**  
 > *Transforming scientific micrographs and continuous spectral gradients into accessible tactile 3D models.*
 
-![TAMP-OS Header](assets/tamp_os_header.png)
+<p align="center">
+  <img src="assets/Figure1_SICB2026_v2.png#gh-light-mode-only" alt="TAMP-OS: Tactile Accessibility Microscopy Printing Workflow (Open-Source)" width="100%">
+  <img src="assets/Figure1_SICB2026_v2_blackbackground2.png#gh-dark-mode-only" alt="TAMP-OS: Tactile Accessibility Microscopy Printing Workflow (Open-Source)" width="100%">
+</p>
 
 ---
 
