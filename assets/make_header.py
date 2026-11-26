@@ -129,7 +129,8 @@ ax.text(W / 2, 0.20,
         fontfamily="DejaVu Sans")
 
 # ── Save ───────────────────────────────────────────────────────────────────
-out = "C:/Users/vazquez/TAMP-OS/assets/tamp_os_header.png"
+from pathlib import Path
+out = str(Path(__file__).resolve().parent / "tamp_os_header.png")
 fig.savefig(out, dpi=100, bbox_inches="tight",
             facecolor=fig.get_facecolor())
 plt.close(fig)
